@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <!-- iOS / Mobile optimisations -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Investissements" />
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0F1117" media="(prefers-color-scheme: dark)" />
+  <title>Suivi d'Investissements Personnels</title>
+  <meta name="description" content="Application de suivi d'investissements personnels : timeline mensuelle, métriques ROI, graphiques et projections de portefeuille." />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    /* =====================================================
+       DESIGN SYSTEM — VARIABLES CSS
+    ===================================================== */
+    :root {
+      --bg-page:       #F2F4F7;
+      --bg-surface:    #FFFFFF;
+      --bg-surface2:   #F8F9FB;
+      --border:        rgba(0,0,0,0.07);
+      --border-w:      1px;
+      --text-primary:  #111827;
+      --text-secondary:#6B7280;
+      --text-muted:    #9CA3AF;
+      --radius-card:   14px;
+      --radius-sm:     7px;
+      --radius-md:     10px;
+      --gap:           16px;
+
+      /* Statuts */
+      --done-color:      #639922;
+      --done-bg:         #EAF3DE;
+      --done-glow:       rgba(99,153,34,0.28);
+      --done-light:      #8DC63F;
+      --planned-color:   #EF9F27;
+      --planned-bg:      #FAEEDA;
+      --planned-glow:    rgba(239,159,39,0.28);
+      --planned-light:   #F5B93A;
+      --forecast-color:  #7F77DD;
+      --forecast-bg:     #EEEDFE;
+      --forecast-glow:   rgba(127,119,221,0.28);
+      --forecast-light:  #A19CF0;
+
+      --accent:   #3B82F6;
+      --danger:   #EF4444;
+      --danger-bg:#FEF2F2;
+
+      /* Safe areas iOS */
+      --safe-top:    env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left:   env(safe-area-inset-left, 0px);
+      --safe-right:  env(safe-area-inset-right, 0px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-page:       #0C0E14;
+        --bg-surface:    #13151E;
+        --bg-surface2:   #0F111A;
+        --border:        rgba(255,255,255,0.07);
+        --text-primary:  #E8EAF0;
+        --text-secondary:#9CA3AF;
+        --text-muted:    #6B7280;
+
+        --done-bg:        rgba(99,153,34,0.13);
+        --done-glow:      rgba(99,153,34,0.40);
+        --planned-bg:     rgba(239,159,39,0.13);
+        --planned-glow:   rgba(239,159,39,0.40);
+        --forecast-bg:    rgba(127,119,221,0.13);
+        --forecast-glow:  rgba(127,119,221,0.40);
+
+        --danger-bg: rgba(239,68,68,0.1);
+      }
+    }
+
+    /* =====================================================
+       BASE RESET + iOS FIX
+    ===================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      /* Prevent font inflation on iOS landscape */
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      /* iOS safe area padding bottom for home bar */
+      padding-bottom: var(--safe-bottom);
+      /* Smooth momentum scroll on iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* =====================================================
+       LAYOUT
+    ===================================================== */
+    .app-header {
+      background: var(--bg-surface);
+      border-bottom: var(--border-w) solid var(--border);
+      padding: 0 max(1.5rem, var(--safe-left));
+      padding-right: max(1.5rem, var(--safe-right));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      /* Account for iOS status bar */
+      padding-top: var(--safe-top);
+      height: calc(60px + var(--safe-top));
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      /* iOS frosted-glass effect */
+      backdrop-filter: blur(16px) saturate(1.4);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    }
+
+    .app-header h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      letter-spacing: -0.01em;
+    }
+
+    .app-header h1 .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--done-color);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1rem;
+    }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Boutons — min 44px touch target (Apple HIG) */
+    .btn-primary {
+      background: var(--done-color);
+      color: #fff;
+      border: none;
+      border-radius: 22px;
+      padding: 0 18px;
+      height: 36px;
+      min-height: 44px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.15s, transform 0.1s;
+      -webkit-font-smoothing: antialiased;
+      white-space: nowrap;
+    }
+    .btn-primary:active { opacity: 0.82; transform: scale(0.97); }
+    @media (hover: hover) { .btn-primary:hover { opacity: 0.88; } }
+
+    .btn-secondary {
+      background: var(--bg-surface2);
+      color: var(--text-secondary);
+      border: var(--border-w) solid var(--border);
+      border-radius: 22px;
+      padding: 0 14px;
+      height: 36px;
+      min-height: 44px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-secondary:active { transform: scale(0.97); }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: var(--border-w) solid rgba(239,68,68,0.22);
+      border-radius: 22px;
+      padding: 0 16px;
+      height: 36px;
+      min-height: 44px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-danger:active { transform: scale(0.97); }
+
+    .main-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem max(1.5rem, var(--safe-left));
+      padding-right: max(1.5rem, var(--safe-right));
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* =====================================================
+       METRIC CARDS
+    ===================================================== */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 1.1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Colored glow strip top */
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
+    }
+    .metric-card.done::before    { background: var(--done-color);    box-shadow: 0 0 10px var(--done-glow); }
+    .metric-card.planned::before { background: var(--planned-color); box-shadow: 0 0 10px var(--planned-glow); }
+    .metric-card.forecast::before{ background: var(--forecast-color);box-shadow: 0 0 10px var(--forecast-glow); }
+    .metric-card.future::before  { background: var(--accent);        box-shadow: 0 0 10px rgba(59,130,246,0.3); }
+    .metric-card.gain::before    { background: #10B981;              box-shadow: 0 0 10px rgba(16,185,129,0.3); }
+    .metric-card.total::before   { background: var(--text-muted);    }
+
+    .metric-label {
+      font-size: 0.70rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .metric-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .metric-sub {
+      font-size: 0.70rem;
+      color: var(--text-secondary);
+    }
+
+    /* =====================================================
+       SECTION / CARD WRAPPER
+    ===================================================== */
+    .section-card {
+      background: var(--bg-surface);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 1rem 1.25rem;
+      border-bottom: var(--border-w) solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 0.80rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .section-body { padding: 1.25rem; }
+
+    /* =====================================================
+       CHARTS
+    ===================================================== */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    /* =====================================================
+       FILTERS / SEARCH
+    ===================================================== */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 160px;
+      background: var(--bg-surface2);
+      border: var(--border-w) solid var(--border);
+      border-radius: 22px;
+      padding: 9px 14px;
+      font-size: 0.83rem;
+      color: var(--text-primary);
+      outline: none;
+      /* iOS: remove native styling */
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .filter-select {
+      background: var(--bg-surface2);
+      border: var(--border-w) solid var(--border);
+      border-radius: 22px;
+      padding: 9px 12px;
+      font-size: 0.80rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      /* arrow */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    /* =====================================================
+       TIMELINE — GLOWING CARDS
+    ===================================================== */
+    .timeline { display: flex; flex-direction: column; }
+
+    .timeline-month-group { display: flex; flex-direction: column; }
+
+    .timeline-month-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      color: var(--text-muted);
+      padding: 0.55rem 1.25rem 0.35rem;
+      background: var(--bg-surface2);
+      border-top: var(--border-w) solid var(--border);
+      border-bottom: var(--border-w) solid var(--border);
+    }
+
+    /* Items padding wrapper */
+    .timeline-items-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 1.25rem;
+    }
+
+    /* Glowing card item */
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: var(--border-w) solid var(--border);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      background: var(--bg-surface2);
+      /* Left luminous stripe via border-left */
+      border-left-width: 3px;
+      overflow: visible;
+    }
+
+    .timeline-item.done {
+      border-left-color: var(--done-color);
+    }
+    .timeline-item.planned {
+      border-left-color: var(--planned-color);
+    }
+    .timeline-item.forecast {
+      border-left-color: var(--forecast-color);
+    }
+
+    /* Hover glow per status */
+    @media (hover: hover) {
+      .timeline-item.done:hover {
+        border-color: var(--done-color);
+        box-shadow: 0 0 0 1px var(--done-color), 0 0 18px var(--done-glow);
+        transform: translateY(-1px);
+      }
+      .timeline-item.planned:hover {
+        border-color: var(--planned-color);
+        box-shadow: 0 0 0 1px var(--planned-color), 0 0 18px var(--planned-glow);
+        transform: translateY(-1px);
+      }
+      .timeline-item.forecast:hover {
+        border-color: var(--forecast-color);
+        box-shadow: 0 0 0 1px var(--forecast-color), 0 0 18px var(--forecast-glow);
+        transform: translateY(-1px);
+      }
+    }
+    /* Active state (tap) for touch */
+    .timeline-item:active {
+      transform: scale(0.985);
+    }
+    .timeline-item.done:active     { box-shadow: 0 0 10px var(--done-glow); }
+    .timeline-item.planned:active  { box-shadow: 0 0 10px var(--planned-glow); }
+    .timeline-item.forecast:active { box-shadow: 0 0 10px var(--forecast-glow); }
+
+    .timeline-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    /* Pulse glow on dot */
+    .timeline-item.done     .timeline-dot { background: var(--done-color);     box-shadow: 0 0 6px var(--done-glow); }
+    .timeline-item.planned  .timeline-dot { background: var(--planned-color);  box-shadow: 0 0 6px var(--planned-glow); }
+    .timeline-item.forecast .timeline-dot { background: var(--forecast-color); box-shadow: 0 0 6px var(--forecast-glow); }
+
+    .timeline-main { flex: 1; min-width: 0; }
+
+    .timeline-desc {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .timeline-meta {
+      font-size: 0.73rem;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-right { text-align: right; flex-shrink: 0; }
+
+    .timeline-amount {
+      font-size: 0.90rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+
+    .timeline-future {
+      font-size: 0.70rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.64rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 100px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .badge.done     { background: var(--done-bg);     color: var(--done-color);    border: 1px solid var(--done-color); }
+    .badge.planned  { background: var(--planned-bg);  color: var(--planned-color); border: 1px solid var(--planned-color); }
+    .badge.forecast { background: var(--forecast-bg); color: var(--forecast-color);border: 1px solid var(--forecast-color); }
+
+    .cat-badge {
+      display: inline-flex;
+      font-size: 0.64rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 100px;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: var(--border-w) solid var(--border);
+    }
+
+    /* Supprimer — always visible on mobile (no hover), hidden by default on desktop */
+    .btn-delete-item {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      min-width: 32px; min-height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    /* Show on hover for pointer devices */
+    @media (hover: hover) {
+      .timeline-item:hover .btn-delete-item { opacity: 1; }
+      .btn-delete-item:hover { background: var(--danger-bg); }
+    }
+    /* Always show on touch devices */
+    @media (hover: none) {
+      .btn-delete-item { opacity: 0.55; }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .empty-state p { font-size: 0.85rem; }
+
+    /* =====================================================
+       MODAL
+    ===================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 900;
+      display: flex;
+      align-items: flex-end; /* iOS sheet style on mobile */
+      justify-content: center;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 92dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      transform: translateY(40px);
+      transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-bottom: var(--safe-bottom);
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    /* Drag handle */
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      margin: 10px auto 0;
+    }
+
+    /* On larger screens: centered dialog */
+    @media (min-width: 600px) {
+      .modal-overlay { align-items: center; padding: 1rem; }
+      .modal {
+        border-radius: var(--radius-card);
+        transform: translateY(16px) scale(0.98);
+        max-height: 90dvh;
+        padding-bottom: 0;
+      }
+      .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+      .modal-handle { display: none; }
+    }
+
+    .modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: var(--border-w) solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0;
+      background: var(--bg-surface);
+      z-index: 1;
+    }
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .modal-close {
+      background: var(--bg-surface2);
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0;
+      width: 28px; height: 28px;
+      min-width: 44px; min-height: 44px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+    }
+    .modal-close:active { opacity: 0.7; }
+
+    .modal-body {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 480px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+
+    .form-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      background: var(--bg-surface2);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 11px 13px;
+      font-size: 0.9rem; /* ≥16px to prevent iOS zoom */
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      /* Prevent tap zoom on iOS */
+      touch-action: manipulation;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 32px;
+    }
+    .form-textarea { resize: vertical; min-height: 70px; }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: var(--border-w) solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .modal-footer .btn-danger-left { margin-right: auto; }
+
+    /* =====================================================
+       DETAIL SLIDE-OVER
+    ===================================================== */
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.38);
+      z-index: 800;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .detail-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .detail-panel {
+      background: var(--bg-surface);
+      width: 100%;
+      max-width: 420px;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border-left: var(--border-w) solid var(--border);
+      transform: translateX(40px);
+      transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-bottom: var(--safe-bottom);
+    }
+    .detail-overlay.open .detail-panel { transform: translateX(0); }
+
+    @media (max-width: 480px) {
+      .detail-overlay { align-items: flex-end; }
+      .detail-panel {
+        max-width: 100%;
+        height: 90dvh;
+        border-left: none;
+        border-top: var(--border-w) solid var(--border);
+        border-radius: var(--radius-card) var(--radius-card) 0 0;
+        transform: translateY(40px);
+      }
+      .detail-overlay.open .detail-panel { transform: translateY(0); }
+    }
+
+    .detail-header {
+      padding: 1.25rem;
+      border-bottom: var(--border-w) solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: sticky; top: 0;
+      background: var(--bg-surface);
+      z-index: 1;
+    }
+
+    .detail-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .detail-title {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .detail-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .detail-kpi-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .detail-kpi {
+      background: var(--bg-surface2);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.8rem;
+    }
+    .detail-kpi-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .detail-kpi-value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .detail-kpi-value.gain { color: #10B981; }
+
+    .sparkline-wrap { position: relative; height: 140px; }
+
+    .detail-notes {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      background: var(--bg-surface2);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.8rem;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+      padding: 1rem 1.25rem;
+      border-top: var(--border-w) solid var(--border);
+    }
+
+    /* =====================================================
+       LEGEND CHIPS
+    ===================================================== */
+    .legend-chips { display: flex; gap: 12px; flex-wrap: wrap; }
+    .legend-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.70rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .legend-swatch {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+    }
+    .legend-swatch.done     { background: var(--done-color);     box-shadow: 0 0 5px var(--done-glow); }
+    .legend-swatch.planned  { background: var(--planned-color);  box-shadow: 0 0 5px var(--planned-glow); }
+    .legend-swatch.forecast { background: var(--forecast-color); box-shadow: 0 0 5px var(--forecast-glow); }
+
+    /* =====================================================
+       RESPONSIVE — Mobile first
+    ===================================================== */
+    @media (max-width: 640px) {
+      .main-container {
+        padding: 1rem;
+        padding-left: max(1rem, var(--safe-left));
+        padding-right: max(1rem, var(--safe-right));
+        gap: 1rem;
+      }
+      .app-header { padding: 0 1rem; }
+      .metric-value { font-size: 1.1rem; }
+      .timeline-items-wrap { padding: 10px; gap: 8px; }
+      .header-actions .btn-secondary { display: none; } /* hide export on small screens */
+    }
+
+    /* =====================================================
+       SCROLLBAR
+    ===================================================== */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* =====================================================
+       UTILITY
+    ===================================================== */
+    .font-mono { font-variant-numeric: tabular-nums; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  </style>
+</head>
+<body>
+
+<!-- =====================================================
+     APP HEADER
+===================================================== -->
+<header class="app-header">
+  <h1>
+    <span class="logo-icon" aria-hidden="true">📈</span>
+    Suivi d'Investissements
+  </h1>
+  <div class="header-actions">
+    <button class="btn-secondary" id="btn-export" title="Exporter en JSON">⬇ Exporter</button>
+    <button class="btn-primary" id="btn-add">＋ Ajouter</button>
+  </div>
+</header>
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+<main class="main-container">
+
+  <!-- MÉTRIQUES -->
+  <section aria-label="Métriques du portefeuille">
+    <div class="metrics-grid" id="metrics-grid"></div>
+  </section>
+
+  <!-- GRAPHIQUES -->
+  <div class="charts-grid">
+    <div class="section-card">
+      <div class="section-header">
+        <span class="section-title">Répartition mensuelle</span>
+        <div class="legend-chips">
+          <span class="legend-chip"><span class="legend-swatch done"></span>Réalisé</span>
+          <span class="legend-chip"><span class="legend-swatch planned"></span>Planifié</span>
+          <span class="legend-chip"><span class="legend-swatch forecast"></span>Prévisionnel</span>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="chart-wrap"><canvas id="chart-monthly" aria-label="Graphique de répartition mensuelle des investissements"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <span class="section-title">Projection ROI — 10 ans</span>
+        <span style="font-size:0.70rem;color:var(--text-muted)">Valeur estimée du portefeuille</span>
+      </div>
+      <div class="section-body">
+        <div class="chart-wrap"><canvas id="chart-roi" aria-label="Graphique de projection ROI sur 10 ans"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">Timeline chronologique</span>
+      <span id="timeline-count" style="font-size:0.72rem;color:var(--text-muted)"></span>
+    </div>
+    <div style="padding:0.9rem 1.25rem; border-bottom: var(--border-w) solid var(--border);">
+      <div class="filter-bar">
+        <input class="search-input" type="search" id="search-input"
+          placeholder="🔍  Rechercher…" aria-label="Recherche"
+          autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+        <select class="filter-select" id="filter-status" aria-label="Filtrer par statut">
+          <option value="">Tous statuts</option>
+          <option value="done">✅ Réalisé</option>
+          <option value="planned">🗓 Planifié</option>
+          <option value="forecast">💡 Prévisionnel</option>
+        </select>
+        <select class="filter-select" id="filter-cat" aria-label="Filtrer par catégorie">
+          <option value="">Toutes catégories</option>
+        </select>
+      </div>
+    </div>
+    <div class="timeline" id="timeline-list"></div>
+  </div>
+
+</main>
+
+<!-- =====================================================
+     MODAL — FORMULAIRE
+===================================================== -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+  <div class="modal" id="modal">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title-text">Nouvel investissement</span>
+      <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label" for="f-desc">Description *</label>
+        <input class="form-input" id="f-desc" type="text" placeholder="ex. ETF MSCI World"
+          autocomplete="off" autocorrect="off" required />
+      </div>
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label class="form-label" for="f-amount">Montant (MAD) *</label>
+          <input class="form-input" id="f-amount" type="number"
+            min="0" step="0.01" placeholder="ex. 12000" inputmode="decimal" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-date">Date (Mois/Année) *</label>
+          <input class="form-input" id="f-date" type="month" required />
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label class="form-label" for="f-cat">Catégorie</label>
+          <input class="form-input" id="f-cat" type="text"
+            placeholder="ex. ETF, Immobilier…" list="cat-list" autocomplete="off" />
+          <datalist id="cat-list"></datalist>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-status">Statut *</label>
+          <select class="form-select" id="f-status">
+            <option value="done">✅ Réalisé</option>
+            <option value="planned">🗓 Planifié</option>
+            <option value="forecast">💡 Prévisionnel</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label class="form-label" for="f-roi">ROI annuel attendu (%)</label>
+          <input class="form-input" id="f-roi" type="number"
+            step="0.1" min="0" value="5" inputmode="decimal" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-duration">Durée de placement (ans)</label>
+          <input class="form-input" id="f-duration" type="number"
+            min="1" step="1" value="5" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="f-notes">Notes / Commentaires</label>
+        <textarea class="form-textarea" id="f-notes" placeholder="Informations complémentaires…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger btn-danger-left" id="btn-delete-modal" style="display:none">🗑 Supprimer</button>
+      <button class="btn-secondary" id="btn-cancel-modal">Annuler</button>
+      <button class="btn-primary" id="btn-save-modal">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     DETAIL SLIDE-OVER
+===================================================== -->
+<div class="detail-overlay" id="detail-overlay" role="dialog" aria-modal="true" aria-label="Détail de l'investissement">
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <div class="detail-dot" id="detail-dot"></div>
+      <div style="flex:1">
+        <div class="detail-title" id="detail-title"></div>
+        <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;" id="detail-badges"></div>
+      </div>
+      <button class="modal-close" id="detail-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-kpi-row" id="detail-kpi-row"></div>
+      <div>
+        <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Courbe de croissance</div>
+        <div class="sparkline-wrap"><canvas id="sparkline-chart"></canvas></div>
+      </div>
+      <div id="detail-notes-wrap" style="display:none">
+        <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Notes</div>
+        <div class="detail-notes" id="detail-notes"></div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-primary" id="btn-edit-detail" style="flex:1">✏️ Modifier</button>
+      <button class="btn-danger" id="btn-delete-detail">🗑 Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+<script>
+/* =====================================================
+   CONSTANTS & DATA
+===================================================== */
+const STORAGE_KEY = 'investment_tracker_data';
+const CURRENCY = 'MAD';
+
+const STATUS_CONFIG = {
+  done:     { label: 'Réalisé',      icon: '✅', color: '#639922', light: '#8DC63F', glow: 'rgba(99,153,34,0.32)'    },
+  planned:  { label: 'Planifié',     icon: '🗓', color: '#EF9F27', light: '#F5B93A', glow: 'rgba(239,159,39,0.32)'   },
+  forecast: { label: 'Prévisionnel', icon: '💡', color: '#7F77DD', light: '#A19CF0', glow: 'rgba(127,119,221,0.32)'  }
+};
+
+function makeSamples() {
+  return [
+    { id: uid(), desc: "ETF MSCI World",          amount: 12000,  date: "2025-01", cat: "ETF",            status: "done",     roi: 8,   duration: 10, notes: "" },
+    { id: uid(), desc: "Obligations BDT",          amount: 20000,  date: "2025-03", cat: "Obligataire",    status: "done",     roi: 4.5, duration: 3,  notes: "" },
+    { id: uid(), desc: "Appartement Kénitra",      amount: 150000, date: "2025-05", cat: "Immobilier",     status: "done",     roi: 7,   duration: 15, notes: "Achat résidentiel, quartier en développement." },
+    { id: uid(), desc: "Actions IAM",              amount: 8500,   date: "2025-08", cat: "Actions",        status: "done",     roi: 6,   duration: 5,  notes: "" },
+    { id: uid(), desc: "ETF S&P 500",              amount: 10000,  date: "2026-06", cat: "ETF",            status: "planned",  roi: 9,   duration: 10, notes: "" },
+    { id: uid(), desc: "Projet locatif Rabat",     amount: 200000, date: "2026-09", cat: "Immobilier",     status: "planned",  roi: 8,   duration: 20, notes: "En attente de compromis de vente." },
+    { id: uid(), desc: "Startup Tech Casablanca",  amount: 30000,  date: "2027-03", cat: "Capital-risque", status: "forecast", roi: 25,  duration: 7,  notes: "Étude de faisabilité en cours." },
+    { id: uid(), desc: "OPCVM obligataire CDG",    amount: 25000,  date: "2027-06", cat: "OPCVM",          status: "forecast", roi: 5,   duration: 4,  notes: "" },
+  ];
+}
+
+let data = [];
+let editingId = null;
+let detailId  = null;
+let sparklineChart = null;
+let monthlyChart   = null;
+let roiChart       = null;
+
+/* =====================================================
+   UTILITIES
+===================================================== */
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+function fmt(n, compact = false) {
+  if (compact && Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + ' M ' + CURRENCY;
+  if (compact && Math.abs(n) >= 1_000)     return (n / 1_000).toFixed(1)     + ' K ' + CURRENCY;
+  return n.toLocaleString('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '\u00a0' + CURRENCY;
+}
+
+function fmtDate(dateStr) {
+  const [y, m] = dateStr.split('-');
+  return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+}
+
+function fmtDateShort(dateStr) {
+  const [y, m] = dateStr.split('-');
+  return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+}
+
+function futureValue(inv) {
+  return inv.amount * Math.pow(1 + inv.roi / 100, inv.duration);
+}
+function netGain(inv) { return futureValue(inv) - inv.amount; }
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =====================================================
+   STORAGE
+===================================================== */
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      data = JSON.parse(raw);
+      data.forEach(d => { if (!d.id) d.id = uid(); });
+    } else {
+      data = makeSamples();
+      save();
+    }
+  } catch { data = makeSamples(); save(); }
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+/* =====================================================
+   METRICS
+===================================================== */
+function renderMetrics() {
+  const totalDone     = data.filter(d => d.status === 'done').reduce((a,d) => a + d.amount, 0);
+  const totalPlanned  = data.filter(d => d.status === 'planned').reduce((a,d) => a + d.amount, 0);
+  const totalForecast = data.filter(d => d.status === 'forecast').reduce((a,d) => a + d.amount, 0);
+  const totalFuture   = data.reduce((a,d) => a + futureValue(d), 0);
+  const totalGain     = data.reduce((a,d) => a + netGain(d), 0);
+
+  document.getElementById('metrics-grid').innerHTML = `
+    <div class="metric-card done">
+      <div class="metric-label">✅ Total Réalisé</div>
+      <div class="metric-value font-mono">${fmt(totalDone, true)}</div>
+      <div class="metric-sub">${data.filter(d=>d.status==='done').length} investissement(s)</div>
+    </div>
+    <div class="metric-card planned">
+      <div class="metric-label">🗓 Total Planifié</div>
+      <div class="metric-value font-mono">${fmt(totalPlanned, true)}</div>
+      <div class="metric-sub">${data.filter(d=>d.status==='planned').length} investissement(s)</div>
+    </div>
+    <div class="metric-card forecast">
+      <div class="metric-label">💡 Total Prévisionnel</div>
+      <div class="metric-value font-mono">${fmt(totalForecast, true)}</div>
+      <div class="metric-sub">${data.filter(d=>d.status==='forecast').length} investissement(s)</div>
+    </div>
+    <div class="metric-card future">
+      <div class="metric-label">📈 Valeur Future Estimée</div>
+      <div class="metric-value font-mono">${fmt(totalFuture, true)}</div>
+      <div class="metric-sub">Intérêts composés cumulés</div>
+    </div>
+    <div class="metric-card gain">
+      <div class="metric-label">💰 Gain Net Estimé</div>
+      <div class="metric-value font-mono" style="color:#10B981">+${fmt(totalGain, true)}</div>
+      <div class="metric-sub">Valeur future − Capital initial</div>
+    </div>
+    <div class="metric-card total">
+      <div class="metric-label">📋 Entrées totales</div>
+      <div class="metric-value font-mono">${data.length}</div>
+      <div class="metric-sub">Tous statuts confondus</div>
+    </div>
+  `;
+}
+
+/* =====================================================
+   MONTHLY BAR CHART — Glowing bars
+===================================================== */
+function renderMonthlyChart() {
+  const monthSet = new Set(data.map(d => d.date));
+  const months   = [...monthSet].sort();
+  const labels   = months.map(fmtDateShort);
+
+  const doneData     = months.map(m => data.filter(d => d.date===m && d.status==='done').reduce((a,d) => a+d.amount, 0));
+  const plannedData  = months.map(m => data.filter(d => d.date===m && d.status==='planned').reduce((a,d) => a+d.amount, 0));
+  const forecastData = months.map(m => data.filter(d => d.date===m && d.status==='forecast').reduce((a,d) => a+d.amount, 0));
+
+  const isDark    = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  const tickColor = isDark ? '#9CA3AF' : '#6B7280';
+
+  // Custom glow plugin
+  const glowPlugin = {
+    id: 'barGlow',
+    afterDatasetDraw(chart, args) {
+      const { ctx } = chart;
+      const glowMap = { 0: 'rgba(99,153,34,0.35)', 1: 'rgba(239,159,39,0.35)', 2: 'rgba(127,119,221,0.35)' };
+      const glow = glowMap[args.index];
+      if (!glow) return;
+      ctx.save();
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = 14;
+      args.meta.data.forEach(bar => {
+        if (bar.base === bar.y) return; // zero bar
+        ctx.fillStyle = chart.data.datasets[args.index].backgroundColor;
+        ctx.beginPath();
+        ctx.roundRect(bar.x - bar.width/2, bar.y, bar.width, bar.base - bar.y, 4);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+  };
+
+  const cfg = {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Réalisé',
+          data: doneData,
+          backgroundColor: '#639922',
+          hoverBackgroundColor: '#8DC63F',
+          borderRadius: 5,
+          borderSkipped: false,
+          borderWidth: 0,
+        },
+        {
+          label: 'Planifié',
+          data: plannedData,
+          backgroundColor: '#EF9F27',
+          hoverBackgroundColor: '#F5B93A',
+          borderRadius: 5,
+          borderSkipped: false,
+          borderWidth: 0,
+        },
+        {
+          label: 'Prévisionnel',
+          data: forecastData,
+          backgroundColor: '#7F77DD',
+          hoverBackgroundColor: '#A19CF0',
+          borderRadius: 5,
+          borderSkipped: false,
+          borderWidth: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1A1D27' : '#FFFFFF',
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+          borderWidth: 1,
+          titleColor: isDark ? '#E8EAF0' : '#111827',
+          bodyColor: isDark ? '#9CA3AF' : '#6B7280',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: ctx => `  ${ctx.dataset.label} : ${fmt(ctx.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: { color: tickColor, font: { size: 10, weight: '600' } },
+          border: { color: gridColor }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: { color: tickColor, font: { size: 10 }, callback: v => fmt(v, true) },
+          beginAtZero: true,
+          border: { color: gridColor }
+        }
+      }
+    },
+    plugins: [glowPlugin]
+  };
+
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(document.getElementById('chart-monthly'), cfg);
+}
+
+/* =====================================================
+   ROI PROJECTION CHART
+===================================================== */
+function renderRoiChart() {
+  const isDark    = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  const tickColor = isDark ? '#9CA3AF' : '#6B7280';
+
+  const YEARS    = Array.from({ length: 11 }, (_, i) => i);
+  const datasets = [];
+
+  data.forEach(inv => {
+    const sc  = STATUS_CONFIG[inv.status];
+    const pts = YEARS.map(t => t > inv.duration ? null : inv.amount * Math.pow(1 + inv.roi / 100, t));
+    datasets.push({
+      label: inv.desc,
+      data: pts,
+      borderColor: sc.color + '50',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      spanGaps: false,
+      tension: 0.4
+    });
+  });
+
+  const totalPts = YEARS.map(t => data.reduce((s, inv) => {
+    if (t > inv.duration) return s + futureValue(inv);
+    return s + inv.amount * Math.pow(1 + inv.roi / 100, t);
+  }, 0));
+
+  datasets.push({
+    label: 'Portefeuille total',
+    data: totalPts,
+    borderColor: isDark ? '#60A5FA' : '#2563EB',
+    backgroundColor: isDark ? 'rgba(96,165,250,0.07)' : 'rgba(37,99,235,0.06)',
+    borderWidth: 3,
+    pointRadius: 3,
+    pointBackgroundColor: isDark ? '#60A5FA' : '#2563EB',
+    tension: 0.4,
+    fill: true
+  });
+
+  const cfg = {
+    type: 'line',
+    data: { labels: YEARS.map(y => `Année ${y}`), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1A1D27' : '#FFFFFF',
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+          borderWidth: 1,
+          titleColor: isDark ? '#E8EAF0' : '#111827',
+          bodyColor: isDark ? '#9CA3AF' : '#6B7280',
+          padding: 10, cornerRadius: 8,
+          filter: item => item.dataset.label === 'Portefeuille total',
+          callbacks: { label: ctx => `  Portefeuille : ${fmt(ctx.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } }, border: { color: gridColor } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 }, callback: v => fmt(v, true) }, beginAtZero: true, border: { color: gridColor } }
+      }
+    }
+  };
+
+  if (roiChart) roiChart.destroy();
+  roiChart = new Chart(document.getElementById('chart-roi'), cfg);
+}
+
+/* =====================================================
+   SPARKLINE (detail panel)
+===================================================== */
+function renderSparkline(inv) {
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const sc     = STATUS_CONFIG[inv.status];
+  const years  = Array.from({ length: inv.duration + 1 }, (_, i) => i);
+  const values = years.map(t => inv.amount * Math.pow(1 + inv.roi / 100, t));
+
+  const glowPlugin = {
+    id: 'lineGlow',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      ctx.save();
+      ctx.shadowColor = sc.glow;
+      ctx.shadowBlur  = 12;
+      chart.data.datasets.forEach((ds, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (meta.hidden) return;
+        ctx.strokeStyle = ds.borderColor;
+        ctx.lineWidth   = ds.borderWidth || 2;
+        ctx.beginPath();
+        meta.data.forEach((pt, j) => {
+          if (j === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+  };
+
+  const cfg = {
+    type: 'line',
+    data: {
+      labels: years.map(y => y === 0 ? 'Départ' : `Année ${y}`),
+      datasets: [{
+        label: 'Valeur estimée',
+        data: values,
+        borderColor: sc.color,
+        backgroundColor: sc.glow.replace('0.32', '0.10'),
+        borderWidth: 2,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        pointBackgroundColor: sc.color,
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1A1D27' : '#FFF',
+          borderColor: sc.color,
+          borderWidth: 1,
+          titleColor: isDark ? '#E8EAF0' : '#111827',
+          bodyColor: sc.color,
+          padding: 8, cornerRadius: 7,
+          callbacks: { label: ctx => `  ${fmt(ctx.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: tickColor(), maxTicksLimit: 6 } },
+        y: {
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' },
+          ticks: { font: { size: 9 }, color: tickColor(), callback: v => fmt(v, true) }
+        }
+      }
+    },
+    plugins: [glowPlugin]
+  };
+
+  if (sparklineChart) sparklineChart.destroy();
+  sparklineChart = new Chart(document.getElementById('sparkline-chart'), cfg);
+}
+
+function tickColor() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? '#9CA3AF' : '#6B7280';
+}
+
+/* =====================================================
+   TIMELINE
+===================================================== */
+function getFilteredData() {
+  const q   = document.getElementById('search-input').value.toLowerCase();
+  const st  = document.getElementById('filter-status').value;
+  const cat = document.getElementById('filter-cat').value;
+
+  return data
+    .filter(d => {
+      if (st  && d.status !== st)  return false;
+      if (cat && d.cat    !== cat) return false;
+      if (q   && !d.desc.toLowerCase().includes(q) && !d.cat.toLowerCase().includes(q)) return false;
+      return true;
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function renderCatFilter() {
+  const cats = [...new Set(data.map(d => d.cat).filter(Boolean))].sort();
+  const sel  = document.getElementById('filter-cat');
+  const cur  = sel.value;
+  sel.innerHTML = '<option value="">Toutes catégories</option>' +
+    cats.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  document.getElementById('cat-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+}
+
+function renderTimeline() {
+  const filtered  = getFilteredData();
+  const container = document.getElementById('timeline-list');
+  document.getElementById('timeline-count').textContent = `${filtered.length} / ${data.length} entrée(s)`;
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>Aucun investissement ne correspond aux filtres.</p>
+      </div>`;
+    return;
+  }
+
+  // Group by month
+  const groups = {};
+  filtered.forEach(inv => {
+    if (!groups[inv.date]) groups[inv.date] = [];
+    groups[inv.date].push(inv);
+  });
+  const sortedMonths = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+  container.innerHTML = sortedMonths.map(month => {
+    const items = groups[month].map(inv => {
+      const sc = STATUS_CONFIG[inv.status];
+      const fv = futureValue(inv);
+      return `
+        <div class="timeline-item ${inv.status}" data-id="${inv.id}"
+          role="button" tabindex="0" aria-label="Voir ${escHtml(inv.desc)}">
+          <div class="timeline-dot"></div>
+          <div class="timeline-main">
+            <div class="timeline-desc">${escHtml(inv.desc)}</div>
+            <div class="timeline-meta">
+              <span class="badge ${inv.status}">${sc.icon} ${sc.label}</span>
+              ${inv.cat ? `<span class="cat-badge">${escHtml(inv.cat)}</span>` : ''}
+              <span>${fmtDate(inv.date)}</span>
+            </div>
+          </div>
+          <div class="timeline-right">
+            <div class="timeline-amount">${fmt(inv.amount)}</div>
+            <div class="timeline-future">→ ${fmt(fv, true)}</div>
+          </div>
+          <button class="btn-delete-item" data-id="${inv.id}"
+            aria-label="Supprimer ${escHtml(inv.desc)}" title="Supprimer">🗑</button>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="timeline-month-group">
+        <div class="timeline-month-label">${fmtDate(month)}</div>
+        <div class="timeline-items-wrap">${items}</div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('.timeline-item').forEach(el => {
+    el.addEventListener('click', e => {
+      const delBtn = e.target.closest('.btn-delete-item');
+      if (delBtn) { e.stopPropagation(); deleteItem(delBtn.dataset.id); return; }
+      openDetail(el.dataset.id);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(el.dataset.id); }
+    });
+  });
+}
+
+/* =====================================================
+   DETAIL PANEL
+===================================================== */
+function openDetail(id) {
+  const inv = data.find(d => d.id === id);
+  if (!inv) return;
+  detailId = id;
+
+  const sc = STATUS_CONFIG[inv.status];
+  const fv = futureValue(inv);
+  const gn = netGain(inv);
+
+  document.getElementById('detail-dot').style.cssText =
+    `background:${sc.color};box-shadow:0 0 8px ${sc.glow}`;
+  document.getElementById('detail-title').textContent = inv.desc;
+  document.getElementById('detail-badges').innerHTML = `
+    <span class="badge ${inv.status}">${sc.icon} ${sc.label}</span>
+    ${inv.cat ? `<span class="cat-badge">${escHtml(inv.cat)}</span>` : ''}`;
+
+  document.getElementById('detail-kpi-row').innerHTML = `
+    <div class="detail-kpi">
+      <div class="detail-kpi-label">Montant initial</div>
+      <div class="detail-kpi-value font-mono">${fmt(inv.amount)}</div>
+    </div>
+    <div class="detail-kpi">
+      <div class="detail-kpi-label">Taux ROI annuel</div>
+      <div class="detail-kpi-value font-mono">${inv.roi}%</div>
+    </div>
+    <div class="detail-kpi">
+      <div class="detail-kpi-label">Durée</div>
+      <div class="detail-kpi-value font-mono">${inv.duration} ans</div>
+    </div>
+    <div class="detail-kpi">
+      <div class="detail-kpi-label">Date</div>
+      <div class="detail-kpi-value">${fmtDate(inv.date)}</div>
+    </div>
+    <div class="detail-kpi">
+      <div class="detail-kpi-label">Valeur estimée à terme</div>
+      <div class="detail-kpi-value font-mono">${fmt(fv)}</div>
+    </div>
+    <div class="detail-kpi">
+      <div class="detail-kpi-label">Gain net estimé</div>
+      <div class="detail-kpi-value gain font-mono">+${fmt(gn)}</div>
+    </div>`;
+
+  const nw = document.getElementById('detail-notes-wrap');
+  if (inv.notes && inv.notes.trim()) {
+    nw.style.display = 'block';
+    document.getElementById('detail-notes').textContent = inv.notes;
+  } else {
+    nw.style.display = 'none';
+  }
+
+  document.getElementById('detail-overlay').classList.add('open');
+  requestAnimationFrame(() => renderSparkline(inv));
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('open');
+  detailId = null;
+}
+
+/* =====================================================
+   MODAL
+===================================================== */
+function openModal(id = null) {
+  editingId = id;
+  const inv = id ? data.find(d => d.id === id) : null;
+
+  document.getElementById('modal-title-text').textContent = id ? "Modifier l'investissement" : 'Nouvel investissement';
+  document.getElementById('btn-save-modal').textContent   = id ? 'Mettre à jour' : 'Enregistrer';
+  document.getElementById('btn-delete-modal').style.display = id ? 'inline-flex' : 'none';
+
+  document.getElementById('f-desc').value     = inv ? inv.desc     : '';
+  document.getElementById('f-amount').value   = inv ? inv.amount   : '';
+  document.getElementById('f-date').value     = inv ? inv.date     : '';
+  document.getElementById('f-cat').value      = inv ? inv.cat      : '';
+  document.getElementById('f-status').value   = inv ? inv.status   : 'done';
+  document.getElementById('f-roi').value      = inv ? inv.roi      : 5;
+  document.getElementById('f-duration').value = inv ? inv.duration : 5;
+  document.getElementById('f-notes').value    = inv ? (inv.notes||'') : '';
+
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-desc').focus(), 300);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null;
+}
+
+function saveModal() {
+  const desc     = document.getElementById('f-desc').value.trim();
+  const amountRaw= document.getElementById('f-amount').value;
+  const date     = document.getElementById('f-date').value;
+  const cat      = document.getElementById('f-cat').value.trim();
+  const status   = document.getElementById('f-status').value;
+  const roi      = parseFloat(document.getElementById('f-roi').value) || 0;
+  const duration = parseInt(document.getElementById('f-duration').value) || 1;
+  const notes    = document.getElementById('f-notes').value.trim();
+
+  if (!desc) { document.getElementById('f-desc').focus(); return; }
+  if (!amountRaw || isNaN(+amountRaw)) { document.getElementById('f-amount').focus(); return; }
+  if (!date) { document.getElementById('f-date').focus(); return; }
+
+  const amount = parseFloat(amountRaw);
+
+  if (editingId) {
+    const idx = data.findIndex(d => d.id === editingId);
+    if (idx >= 0) data[idx] = { ...data[idx], desc, amount, date, cat, status, roi, duration, notes };
+  } else {
+    data.push({ id: uid(), desc, amount, date, cat, status, roi, duration, notes });
+  }
+
+  save();
+  closeModal();
+  refresh();
+}
+
+function deleteItem(id) {
+  if (!confirm('Supprimer cet investissement ?')) return;
+  data = data.filter(d => d.id !== id);
+  save();
+  closeDetail();
+  refresh();
+}
+
+/* =====================================================
+   EXPORT
+===================================================== */
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `investissements_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* =====================================================
+   REFRESH ALL
+===================================================== */
+function refresh() {
+  renderMetrics();
+  renderCatFilter();
+  renderTimeline();
+  renderMonthlyChart();
+  renderRoiChart();
+}
+
+/* =====================================================
+   EVENTS
+===================================================== */
+document.getElementById('btn-add').addEventListener('click', () => openModal());
+document.getElementById('btn-export').addEventListener('click', exportData);
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+document.getElementById('btn-save-modal').addEventListener('click', saveModal);
+document.getElementById('btn-delete-modal').addEventListener('click', () => { if (editingId) deleteItem(editingId); });
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+document.getElementById('detail-close').addEventListener('click', closeDetail);
+document.getElementById('detail-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('detail-overlay')) closeDetail();
+});
+document.getElementById('btn-edit-detail').addEventListener('click', () => {
+  const id = detailId; closeDetail(); openModal(id);
+});
+document.getElementById('btn-delete-detail').addEventListener('click', () => {
+  if (detailId) deleteItem(detailId);
+});
+
+document.getElementById('search-input').addEventListener('input', renderTimeline);
+document.getElementById('filter-status').addEventListener('change', renderTimeline);
+document.getElementById('filter-cat').addEventListener('change', renderTimeline);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('modal-overlay').classList.contains('open')) closeModal();
+    else if (document.getElementById('detail-overlay').classList.contains('open')) closeDetail();
+  }
+});
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  renderMonthlyChart();
+  renderRoiChart();
+  if (detailId) renderSparkline(data.find(d => d.id === detailId));
+});
+
+/* =====================================================
+   INIT
+===================================================== */
+load();
+refresh();
+</script>
+</body>
+</html>

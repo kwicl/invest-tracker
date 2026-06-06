@@ -1,0 +1,21 @@
+# Dépendances Node
+node_modules/
+.npm
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables d'environnement
+.env
+.env.local
+.env.*.local
+
+# OS / Éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vercel
+.vercel/
