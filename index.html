@@ -5,48 +5,55 @@
   <!-- iOS / Mobile optimisations -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Investissements" />
-  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0F1117" media="(prefers-color-scheme: dark)" />
-  <title>Suivi d'Investissements Personnels</title>
-  <meta name="description" content="Application de suivi d'investissements personnels : timeline mensuelle, métriques ROI, graphiques et projections de portefeuille." />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Dépenses" />
+  <meta name="theme-color" content="#0A0102" />
+  <title>Dépenses par Catégorie — Tableau de Bord</title>
+  <meta name="description" content="Application de suivi de dépenses par catégorie connectée à Google Sheets. Design premium sombre et futuriste." />
+  
+  <!-- Fonts & Iconography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
     /* =====================================================
        DESIGN SYSTEM — VARIABLES CSS
     ===================================================== */
     :root {
-      --bg-page:       #F2F4F7;
-      --bg-surface:    #FFFFFF;
-      --bg-surface2:   #F8F9FB;
-      --border:        rgba(0,0,0,0.07);
+      --bg-page:       #0A0102; /* Bordeaux ultra profond */
+      --bg-surface:    rgba(30, 6, 8, 0.65); /* Glassmorphism bordeaux */
+      --bg-surface2:   rgba(45, 9, 12, 0.45);
+      --border:        rgba(255, 255, 255, 0.08);
+      --border-focus:  #E0115F;
       --border-w:      1px;
-      --text-primary:  #111827;
-      --text-secondary:#6B7280;
-      --text-muted:    #9CA3AF;
-      --radius-card:   14px;
-      --radius-sm:     7px;
-      --radius-md:     10px;
+      
+      --text-primary:  #F5EBEB; /* Blanc chaud */
+      --text-secondary:#B39D9E; /* Rose-gris atténué */
+      --text-muted:    #8C7375;
+      
+      --radius-card:   16px;
+      --radius-sm:     8px;
+      --radius-md:     12px;
       --gap:           16px;
 
       /* Statuts */
-      --done-color:      #639922;
-      --done-bg:         #EAF3DE;
-      --done-glow:       rgba(99,153,34,0.28);
-      --done-light:      #8DC63F;
-      --planned-color:   #EF9F27;
-      --planned-bg:      #FAEEDA;
-      --planned-glow:    rgba(239,159,39,0.28);
-      --planned-light:   #F5B93A;
-      --forecast-color:  #7F77DD;
-      --forecast-bg:     #EEEDFE;
-      --forecast-glow:   rgba(127,119,221,0.28);
-      --forecast-light:  #A19CF0;
+      --done-color:      #E0115F; /* Rose rubis profond */
+      --done-bg:         rgba(224, 17, 95, 0.15);
+      --done-glow:       rgba(224, 17, 95, 0.35);
+      
+      --planned-color:   #D35400; /* Orange brûlé */
+      --planned-bg:      rgba(211, 84, 0, 0.15);
+      --planned-glow:    rgba(211, 84, 0, 0.35);
+      
+      --forecast-color:  #8E44AD; /* Violet prune */
+      --forecast-bg:     rgba(142, 68, 173, 0.15);
+      --forecast-glow:   rgba(142, 68, 173, 0.35);
 
-      --accent:   #3B82F6;
-      --danger:   #EF4444;
-      --danger-bg:#FEF2F2;
+      --accent:          #800020; /* Bordeaux pur */
+      --danger:          #EF4444;
+      --danger-bg:       rgba(239, 68, 68, 0.15);
 
       /* Safe areas iOS */
       --safe-top:    env(safe-area-inset-top, 0px);
@@ -55,29 +62,8 @@
       --safe-right:  env(safe-area-inset-right, 0px);
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-page:       #0C0E14;
-        --bg-surface:    #13151E;
-        --bg-surface2:   #0F111A;
-        --border:        rgba(255,255,255,0.07);
-        --text-primary:  #E8EAF0;
-        --text-secondary:#9CA3AF;
-        --text-muted:    #6B7280;
-
-        --done-bg:        rgba(99,153,34,0.13);
-        --done-glow:      rgba(99,153,34,0.40);
-        --planned-bg:     rgba(239,159,39,0.13);
-        --planned-glow:   rgba(239,159,39,0.40);
-        --forecast-bg:    rgba(127,119,221,0.13);
-        --forecast-glow:  rgba(127,119,221,0.40);
-
-        --danger-bg: rgba(239,68,68,0.1);
-      }
-    }
-
     /* =====================================================
-       BASE RESET + iOS FIX
+       BASE RESET & GLOWING BACKGROUND
     ===================================================== */
     *, *::before, *::after {
       box-sizing: border-box;
@@ -86,118 +72,200 @@
     }
 
     html {
-      /* Prevent font inflation on iOS landscape */
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
+      font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 300;
       background: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(114, 47, 55, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(128, 0, 32, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(74, 4, 4, 0.18) 0%, transparent 50%);
+      background-attachment: fixed;
       color: var(--text-primary);
       min-height: 100dvh;
-      /* iOS safe area padding bottom for home bar */
       padding-bottom: var(--safe-bottom);
-      /* Smooth momentum scroll on iOS */
       -webkit-overflow-scrolling: touch;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient float glow animation */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: radial-gradient(circle at 75% 25%, rgba(142, 68, 173, 0.08) 0%, transparent 35%);
+      z-index: -1;
+      pointer-events: none;
+      animation: floatGlow 15s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatGlow {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, -40px) scale(1.15); }
     }
 
     /* =====================================================
-       LAYOUT
+       LAYOUT & HEADER
     ===================================================== */
     .app-header {
-      background: var(--bg-surface);
+      background: rgba(10, 1, 2, 0.75);
       border-bottom: var(--border-w) solid var(--border);
       padding: 0 max(1.5rem, var(--safe-left));
       padding-right: max(1.5rem, var(--safe-right));
       display: flex;
       align-items: center;
       justify-content: space-between;
-      /* Account for iOS status bar */
       padding-top: var(--safe-top);
-      height: calc(60px + var(--safe-top));
+      height: calc(65px + var(--safe-top));
       position: sticky;
       top: 0;
       z-index: 100;
-      /* iOS frosted-glass effect */
-      backdrop-filter: blur(16px) saturate(1.4);
-      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     .app-header h1 {
-      font-size: 1rem;
-      font-weight: 700;
+      font-size: 1.1rem;
+      font-weight: 500;
       color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 10px;
       letter-spacing: -0.01em;
     }
 
     .app-header h1 .logo-icon {
-      width: 30px; height: 30px;
-      background: var(--done-color);
-      border-radius: 8px;
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--done-color));
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: 1rem;
+      color: #fff; font-size: 0.95rem;
+      box-shadow: 0 0 15px rgba(224, 17, 95, 0.4);
     }
 
-    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
 
-    /* Boutons — min 44px touch target (Apple HIG) */
-    .btn-primary {
-      background: var(--done-color);
-      color: #fff;
+    /* =====================================================
+       PREMIUM GEMINI BUTTON WITH ROTATING RAINBOW BORDER
+    ===================================================== */
+    .btn-gemini {
+      position: relative;
+      background: rgba(30, 6, 8, 0.8);
+      color: #FFF;
       border: none;
       border-radius: 22px;
-      padding: 0 18px;
-      height: 36px;
-      min-height: 44px;
-      font-size: 0.82rem;
-      font-weight: 700;
+      padding: 1.5px; /* Border thickness */
       cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
-      transition: opacity 0.15s, transform 0.1s;
-      -webkit-font-smoothing: antialiased;
-      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.8rem;
+      min-height: 40px;
+      transition: transform 0.15s, box-shadow 0.3s;
+      overflow: hidden;
+      z-index: 1;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
-    .btn-primary:active { opacity: 0.82; transform: scale(0.97); }
-    @media (hover: hover) { .btn-primary:hover { opacity: 0.88; } }
+    
+    .btn-gemini-inner {
+      background: #0E0203;
+      padding: 0 18px;
+      height: 100%;
+      min-height: 37px;
+      border-radius: 20.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    
+    .btn-gemini:hover .btn-gemini-inner {
+      background: #190507;
+    }
+    
+    .btn-gemini::before {
+      content: '';
+      position: absolute;
+      top: -150%;
+      left: -150%;
+      width: 400%;
+      height: 400%;
+      background: conic-gradient(
+        from 0deg,
+        #722F37, /* Bordeaux */
+        #E0115F, /* Deep pink */
+        #8E44AD, /* Plum */
+        #D35400, /* Burnt orange */
+        #E0115F,
+        #722F37
+      );
+      animation: rotate-border 4s linear infinite;
+      z-index: -2;
+    }
+    
+    @keyframes rotate-border {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .btn-gemini:active {
+      transform: scale(0.97);
+    }
+    
+    .btn-gemini:hover {
+      box-shadow: 0 0 14px rgba(224, 17, 95, 0.35), 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
 
     .btn-secondary {
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.04);
       color: var(--text-secondary);
       border: var(--border-w) solid var(--border);
       border-radius: 22px;
       padding: 0 14px;
-      height: 36px;
-      min-height: 44px;
-      font-size: 0.82rem;
-      font-weight: 600;
+      height: 38px;
+      min-height: 40px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
       cursor: pointer;
       display: flex; align-items: center; gap: 6px;
-      transition: background 0.15s, transform 0.1s;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
       white-space: nowrap;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
     }
     .btn-secondary:active { transform: scale(0.97); }
 
     .btn-danger {
       background: var(--danger-bg);
       color: var(--danger);
-      border: var(--border-w) solid rgba(239,68,68,0.22);
+      border: var(--border-w) solid rgba(239, 68, 68, 0.3);
       border-radius: 22px;
       padding: 0 16px;
-      height: 36px;
-      min-height: 44px;
-      font-size: 0.82rem;
-      font-weight: 700;
+      height: 38px;
+      min-height: 40px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
       cursor: pointer;
       transition: opacity 0.15s, transform 0.1s;
     }
     .btn-danger:active { transform: scale(0.97); }
 
+    /* =====================================================
+       MAIN CONTAINER & METRIC CARDS
+    ===================================================== */
     .main-container {
       max-width: 1280px;
       margin: 0 auto;
@@ -208,55 +276,58 @@
       gap: 1.5rem;
     }
 
-    /* =====================================================
-       METRIC CARDS
-    ===================================================== */
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
     }
 
     .metric-card {
-      background: var(--bg-surface);
+      background: rgba(30, 6, 8, 0.45);
       border: var(--border-w) solid var(--border);
       border-radius: var(--radius-card);
-      padding: 1.1rem 1rem;
+      padding: 1.2rem 1.1rem;
       display: flex;
       flex-direction: column;
       gap: 5px;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(224, 17, 95, 0.3);
     }
 
-    /* Colored glow strip top */
-    .metric-card::before {
+    .metric-card::after {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      border-radius: var(--radius-card) var(--radius-card) 0 0;
+      inset: 0;
+      border-radius: var(--radius-card);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(224, 17, 95, 0.25), transparent, rgba(211, 84, 0, 0.25));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
     }
-    .metric-card.done::before    { background: var(--done-color);    box-shadow: 0 0 10px var(--done-glow); }
-    .metric-card.planned::before { background: var(--planned-color); box-shadow: 0 0 10px var(--planned-glow); }
-    .metric-card.forecast::before{ background: var(--forecast-color);box-shadow: 0 0 10px var(--forecast-glow); }
-    .metric-card.future::before  { background: var(--accent);        box-shadow: 0 0 10px rgba(59,130,246,0.3); }
-    .metric-card.gain::before    { background: #10B981;              box-shadow: 0 0 10px rgba(16,185,129,0.3); }
-    .metric-card.total::before   { background: var(--text-muted);    }
 
     .metric-label {
       font-size: 0.70rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.07em;
+      letter-spacing: 0.08em;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 2px;
     }
     .metric-value {
-      font-size: 1.3rem;
-      font-weight: 800;
+      font-size: 1.35rem;
+      font-weight: 700;
       color: var(--text-primary);
-      line-height: 1.15;
+      line-height: 1.2;
       letter-spacing: -0.02em;
     }
     .metric-sub {
@@ -271,28 +342,32 @@
       background: var(--bg-surface);
       border: var(--border-w) solid var(--border);
       border-radius: var(--radius-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       overflow: hidden;
     }
 
     .section-header {
-      padding: 1rem 1.25rem;
+      padding: 1.1rem 1.4rem;
       border-bottom: var(--border-w) solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
+      background: rgba(16, 3, 5, 0.25);
     }
 
     .section-title {
-      font-size: 0.80rem;
-      font-weight: 800;
+      font-size: 0.78rem;
+      font-weight: 700;
       color: var(--text-primary);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
     }
 
-    .section-body { padding: 1.25rem; }
+    .section-body { padding: 1.4rem; }
 
     /* =====================================================
        CHARTS
@@ -308,15 +383,15 @@
 
     .chart-wrap {
       position: relative;
-      height: 260px;
+      height: 250px;
     }
 
     /* =====================================================
-       FILTERS / SEARCH
+       FILTERS / SEARCH & TABS
     ===================================================== */
     .filter-bar {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
@@ -324,133 +399,186 @@
     .search-input {
       flex: 1;
       min-width: 160px;
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.03);
       border: var(--border-w) solid var(--border);
       border-radius: 22px;
-      padding: 9px 14px;
+      padding: 9px 16px;
+      font-family: inherit;
       font-size: 0.83rem;
       color: var(--text-primary);
       outline: none;
-      /* iOS: remove native styling */
       -webkit-appearance: none;
       appearance: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .search-input::placeholder { color: var(--text-muted); }
-    .search-input:focus { border-color: var(--accent); }
+    .search-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 10px rgba(224, 17, 95, 0.2);
+    }
 
     .filter-select {
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.03);
       border: var(--border-w) solid var(--border);
       border-radius: 22px;
       padding: 9px 12px;
+      font-family: inherit;
       font-size: 0.80rem;
       color: var(--text-primary);
       cursor: pointer;
       outline: none;
       -webkit-appearance: none;
       appearance: none;
-      /* arrow */
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B39D9E'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 28px;
+      background-position: right 12px center;
+      padding-right: 30px;
+      transition: border-color 0.2s;
+    }
+    .filter-select:focus {
+      border-color: var(--border-focus);
+    }
+
+    .btn-tab {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      border-radius: 15px;
+      padding: 5px 14px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-tab.active {
+      background: rgba(224, 17, 95, 0.18);
+      color: var(--done-color);
+      border-color: rgba(224, 17, 95, 0.3);
+      box-shadow: 0 0 10px rgba(224, 17, 95, 0.15);
+    }
+    .btn-tab:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
     }
 
     /* =====================================================
-       TIMELINE — GLOWING CARDS
+       TABLE VIEW & STYLING
+    ===================================================== */
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+    .transaction-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+    .transaction-table th, .transaction-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .transaction-table th {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      background: rgba(16, 3, 5, 0.35);
+    }
+    .transaction-table tbody tr {
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .transaction-table tbody tr:hover {
+      background: rgba(224, 17, 95, 0.07);
+    }
+    .transaction-table td {
+      color: var(--text-primary);
+    }
+    .transaction-table td.amount-cell {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* =====================================================
+       TIMELINE — GLOWING CARDS (RE-STYLED)
     ===================================================== */
     .timeline { display: flex; flex-direction: column; }
-
     .timeline-month-group { display: flex; flex-direction: column; }
-
+    
     .timeline-month-label {
-      font-size: 0.68rem;
-      font-weight: 800;
+      font-size: 0.70rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.10em;
+      letter-spacing: 0.08em;
       color: var(--text-muted);
-      padding: 0.55rem 1.25rem 0.35rem;
-      background: var(--bg-surface2);
+      padding: 0.65rem 1.4rem;
+      background: rgba(16, 3, 5, 0.25);
       border-top: var(--border-w) solid var(--border);
       border-bottom: var(--border-w) solid var(--border);
     }
 
-    /* Items padding wrapper */
     .timeline-items-wrap {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      padding: 12px 1.25rem;
+      padding: 14px 1.4rem;
     }
 
-    /* Glowing card item */
     .timeline-item {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 14px;
+      padding: 12px 16px;
       border-radius: var(--radius-md);
       border: var(--border-w) solid var(--border);
       cursor: pointer;
       position: relative;
       transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
-      background: var(--bg-surface2);
-      /* Left luminous stripe via border-left */
-      border-left-width: 3px;
+      background: rgba(255, 255, 255, 0.02);
+      border-left-width: 3.5px;
       overflow: visible;
     }
 
-    .timeline-item.done {
-      border-left-color: var(--done-color);
-    }
-    .timeline-item.planned {
-      border-left-color: var(--planned-color);
-    }
-    .timeline-item.forecast {
-      border-left-color: var(--forecast-color);
-    }
+    .timeline-item.done { border-left-color: var(--done-color); }
+    .timeline-item.planned { border-left-color: var(--planned-color); }
+    .timeline-item.forecast { border-left-color: var(--forecast-color); }
 
-    /* Hover glow per status */
     @media (hover: hover) {
       .timeline-item.done:hover {
         border-color: var(--done-color);
-        box-shadow: 0 0 0 1px var(--done-color), 0 0 18px var(--done-glow);
+        box-shadow: 0 0 15px var(--done-glow);
         transform: translateY(-1px);
       }
       .timeline-item.planned:hover {
         border-color: var(--planned-color);
-        box-shadow: 0 0 0 1px var(--planned-color), 0 0 18px var(--planned-glow);
+        box-shadow: 0 0 15px var(--planned-glow);
         transform: translateY(-1px);
       }
       .timeline-item.forecast:hover {
         border-color: var(--forecast-color);
-        box-shadow: 0 0 0 1px var(--forecast-color), 0 0 18px var(--forecast-glow);
+        box-shadow: 0 0 15px var(--forecast-glow);
         transform: translateY(-1px);
       }
     }
-    /* Active state (tap) for touch */
-    .timeline-item:active {
-      transform: scale(0.985);
-    }
-    .timeline-item.done:active     { box-shadow: 0 0 10px var(--done-glow); }
-    .timeline-item.planned:active  { box-shadow: 0 0 10px var(--planned-glow); }
-    .timeline-item.forecast:active { box-shadow: 0 0 10px var(--forecast-glow); }
+    
+    .timeline-item:active { transform: scale(0.985); }
 
     .timeline-dot {
-      width: 9px; height: 9px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    /* Pulse glow on dot */
-    .timeline-item.done     .timeline-dot { background: var(--done-color);     box-shadow: 0 0 6px var(--done-glow); }
-    .timeline-item.planned  .timeline-dot { background: var(--planned-color);  box-shadow: 0 0 6px var(--planned-glow); }
-    .timeline-item.forecast .timeline-dot { background: var(--forecast-color); box-shadow: 0 0 6px var(--forecast-glow); }
+    .timeline-item.done .timeline-dot { background: var(--done-color); box-shadow: 0 0 6px var(--done-color); }
+    .timeline-item.planned .timeline-dot { background: var(--planned-color); box-shadow: 0 0 6px var(--planned-color); }
+    .timeline-item.forecast .timeline-dot { background: var(--forecast-color); box-shadow: 0 0 6px var(--forecast-color); }
 
     .timeline-main { flex: 1; min-width: 0; }
-
     .timeline-desc {
       font-size: 0.88rem;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -468,94 +596,79 @@
     }
 
     .timeline-right { text-align: right; flex-shrink: 0; }
-
     .timeline-amount {
       font-size: 0.90rem;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--text-primary);
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
     }
 
-    .timeline-future {
-      font-size: 0.70rem;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
+    /* =====================================================
+       BADGES & CHIPS
+    ===================================================== */
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      font-size: 0.64rem;
+      font-size: 0.62rem;
       font-weight: 800;
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 100px;
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
-    .badge.done     { background: var(--done-bg);     color: var(--done-color);    border: 1px solid var(--done-color); }
-    .badge.planned  { background: var(--planned-bg);  color: var(--planned-color); border: 1px solid var(--planned-color); }
-    .badge.forecast { background: var(--forecast-bg); color: var(--forecast-color);border: 1px solid var(--forecast-color); }
+    .badge.done     { background: var(--done-bg);     color: var(--done-color);    border: 1px solid rgba(224, 17, 95, 0.35); }
+    .badge.planned  { background: var(--planned-bg);  color: var(--planned-color); border: 1px solid rgba(211, 84, 0, 0.35); }
+    .badge.forecast { background: var(--forecast-bg); color: var(--forecast-color);border: 1px solid rgba(142, 68, 173, 0.35); }
 
     .cat-badge {
       display: inline-flex;
-      font-size: 0.64rem;
+      font-size: 0.62rem;
       font-weight: 600;
       padding: 2px 7px;
       border-radius: 100px;
-      background: var(--bg-surface);
+      background: rgba(255, 255, 255, 0.05);
       color: var(--text-secondary);
       border: var(--border-w) solid var(--border);
     }
 
-    /* Supprimer — always visible on mobile (no hover), hidden by default on desktop */
     .btn-delete-item {
       background: transparent;
       border: none;
       color: var(--danger);
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.95rem;
       padding: 6px;
       border-radius: var(--radius-sm);
       flex-shrink: 0;
-      min-width: 32px; min-height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0;
-      transition: opacity 0.15s, background 0.15s;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
     }
-    /* Show on hover for pointer devices */
-    @media (hover: hover) {
-      .timeline-item:hover .btn-delete-item { opacity: 1; }
-      .btn-delete-item:hover { background: var(--danger-bg); }
-    }
-    /* Always show on touch devices */
-    @media (hover: none) {
-      .btn-delete-item { opacity: 0.55; }
-    }
+    .btn-delete-item:hover { background: var(--danger-bg); }
 
     .empty-state {
       text-align: center;
       padding: 3rem 1rem;
       color: var(--text-muted);
     }
-    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-    .empty-state p { font-size: 0.85rem; }
+    .empty-state .empty-icon { font-size: 2.2rem; margin-bottom: 0.8rem; }
 
     /* =====================================================
-       MODAL
+       MODAL & FORMULAIRE (GLASSMORPHISM)
     ===================================================== */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.7);
       z-index: 900;
       display: flex;
-      align-items: flex-end; /* iOS sheet style on mobile */
+      align-items: flex-end;
       justify-content: center;
       padding: 0;
       opacity: 0;
       pointer-events: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       transition: opacity 0.22s;
     }
     .modal-overlay.open {
@@ -564,35 +677,34 @@
     }
 
     .modal {
-      background: var(--bg-surface);
-      border: var(--border-w) solid var(--border);
+      background: rgba(18, 2, 4, 0.93);
+      border: var(--border-w) solid rgba(224, 17, 95, 0.2);
       border-radius: var(--radius-card) var(--radius-card) 0 0;
       width: 100%;
-      max-width: 600px;
-      max-height: 92dvh;
+      max-width: 580px;
+      max-height: 90dvh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       transform: translateY(40px);
       transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
       padding-bottom: var(--safe-bottom);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(224, 17, 95, 0.1);
     }
     .modal-overlay.open .modal { transform: translateY(0); }
 
-    /* Drag handle */
     .modal-handle {
       width: 36px; height: 4px;
-      background: var(--border);
+      background: rgba(255,255,255,0.1);
       border-radius: 4px;
       margin: 10px auto 0;
     }
 
-    /* On larger screens: centered dialog */
     @media (min-width: 600px) {
       .modal-overlay { align-items: center; padding: 1rem; }
       .modal {
         border-radius: var(--radius-card);
         transform: translateY(16px) scale(0.98);
-        max-height: 90dvh;
+        max-height: 85dvh;
         padding-bottom: 0;
       }
       .modal-overlay.open .modal { transform: translateY(0) scale(1); }
@@ -600,37 +712,35 @@
     }
 
     .modal-header {
-      padding: 1rem 1.5rem;
+      padding: 1.1rem 1.4rem;
       border-bottom: var(--border-w) solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky; top: 0;
-      background: var(--bg-surface);
+      background: rgba(18, 2, 4, 0.96);
       z-index: 1;
     }
     .modal-title {
       font-size: 0.95rem;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--text-primary);
     }
     .modal-close {
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.05);
       border: none;
       color: var(--text-secondary);
-      font-size: 1rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      padding: 0;
-      width: 28px; height: 28px;
-      min-width: 44px; min-height: 44px;
+      width: 32px; height: 32px;
+      min-width: 36px; min-height: 36px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      line-height: 1;
     }
-    .modal-close:active { opacity: 0.7; }
+    .modal-close:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 
     .modal-body {
-      padding: 1.25rem 1.5rem;
+      padding: 1.4rem;
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -648,7 +758,7 @@
     .form-field { display: flex; flex-direction: column; gap: 5px; }
 
     .form-label {
-      font-size: 0.72rem;
+      font-size: 0.70rem;
       font-weight: 700;
       color: var(--text-secondary);
       text-transform: uppercase;
@@ -656,56 +766,59 @@
     }
 
     .form-input, .form-select, .form-textarea {
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.03);
       border: var(--border-w) solid var(--border);
       border-radius: var(--radius-md);
-      padding: 11px 13px;
-      font-size: 0.9rem; /* ≥16px to prevent iOS zoom */
-      color: var(--text-primary);
+      padding: 11px 14px;
       font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text-primary);
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.2s, box-shadow 0.2s;
       width: 100%;
       -webkit-appearance: none;
       appearance: none;
-      /* Prevent tap zoom on iOS */
       touch-action: manipulation;
     }
     .form-input:focus, .form-select:focus, .form-textarea:focus {
-      border-color: var(--accent);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 8px rgba(224, 17, 95, 0.25);
     }
     .form-select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B39D9E'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 13px center;
+      background-position: right 14px center;
       padding-right: 32px;
     }
     .form-textarea { resize: vertical; min-height: 70px; }
 
     .modal-footer {
-      padding: 1rem 1.5rem;
+      padding: 1.1rem 1.4rem;
       border-top: var(--border-w) solid var(--border);
       display: flex;
       align-items: center;
       justify-content: flex-end;
       gap: 10px;
       flex-wrap: wrap;
+      background: rgba(18, 2, 4, 0.95);
     }
     .modal-footer .btn-danger-left { margin-right: auto; }
 
     /* =====================================================
-       DETAIL SLIDE-OVER
+       DETAIL SLIDE-OVER (RE-STYLED)
     ===================================================== */
     .detail-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.38);
+      background: rgba(0,0,0,0.6);
       z-index: 800;
       display: flex;
       align-items: flex-start;
       justify-content: flex-end;
       opacity: 0;
       pointer-events: none;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       transition: opacity 0.2s;
     }
     .detail-overlay.open {
@@ -714,16 +827,17 @@
     }
 
     .detail-panel {
-      background: var(--bg-surface);
+      background: rgba(14, 2, 4, 0.96);
+      border-left: var(--border-w) solid rgba(224, 17, 95, 0.15);
       width: 100%;
       max-width: 420px;
       height: 100%;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      border-left: var(--border-w) solid var(--border);
       transform: translateX(40px);
       transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
       padding-bottom: var(--safe-bottom);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.6);
     }
     .detail-overlay.open .detail-panel { transform: translateX(0); }
 
@@ -731,9 +845,9 @@
       .detail-overlay { align-items: flex-end; }
       .detail-panel {
         max-width: 100%;
-        height: 90dvh;
+        height: 85dvh;
         border-left: none;
-        border-top: var(--border-w) solid var(--border);
+        border-top: var(--border-w) solid rgba(224, 17, 95, 0.15);
         border-radius: var(--radius-card) var(--radius-card) 0 0;
         transform: translateY(40px);
       }
@@ -747,7 +861,7 @@
       align-items: flex-start;
       gap: 12px;
       position: sticky; top: 0;
-      background: var(--bg-surface);
+      background: rgba(14, 2, 4, 0.98);
       z-index: 1;
     }
 
@@ -755,12 +869,12 @@
       width: 12px; height: 12px;
       border-radius: 50%;
       flex-shrink: 0;
-      margin-top: 4px;
+      margin-top: 5px;
     }
     .detail-title {
       flex: 1;
-      font-size: 1rem;
-      font-weight: 800;
+      font-size: 1.05rem;
+      font-weight: 700;
       color: var(--text-primary);
       line-height: 1.3;
     }
@@ -774,7 +888,7 @@
     }
 
     .detail-kpi {
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.02);
       border: var(--border-w) solid var(--border);
       border-radius: var(--radius-md);
       padding: 0.8rem;
@@ -789,21 +903,19 @@
     }
     .detail-kpi-value {
       font-size: 0.95rem;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--text-primary);
       font-variant-numeric: tabular-nums;
     }
-    .detail-kpi-value.gain { color: #10B981; }
-
-    .sparkline-wrap { position: relative; height: 140px; }
 
     .detail-notes {
       font-size: 0.82rem;
       color: var(--text-secondary);
-      background: var(--bg-surface2);
+      background: rgba(255, 255, 255, 0.02);
       border: var(--border-w) solid var(--border);
       border-radius: var(--radius-md);
       padding: 0.8rem;
+      line-height: 1.5;
     }
 
     .detail-actions {
@@ -811,10 +923,11 @@
       gap: 10px;
       padding: 1rem 1.25rem;
       border-top: var(--border-w) solid var(--border);
+      background: rgba(14, 2, 4, 0.98);
     }
 
     /* =====================================================
-       LEGEND CHIPS
+       LEGEND CHIPS & SCROLLBAR
     ===================================================== */
     .legend-chips { display: flex; gap: 12px; flex-wrap: wrap; }
     .legend-chip {
@@ -829,38 +942,15 @@
       width: 10px; height: 10px;
       border-radius: 3px;
     }
-    .legend-swatch.done     { background: var(--done-color);     box-shadow: 0 0 5px var(--done-glow); }
-    .legend-swatch.planned  { background: var(--planned-color);  box-shadow: 0 0 5px var(--planned-glow); }
-    .legend-swatch.forecast { background: var(--forecast-color); box-shadow: 0 0 5px var(--forecast-glow); }
+    .legend-swatch.done     { background: var(--done-color);     box-shadow: 0 0 5px var(--done-color); }
+    .legend-swatch.planned  { background: var(--planned-color);  box-shadow: 0 0 5px var(--planned-color); }
+    .legend-swatch.forecast { background: var(--forecast-color); box-shadow: 0 0 5px var(--forecast-color); }
 
-    /* =====================================================
-       RESPONSIVE — Mobile first
-    ===================================================== */
-    @media (max-width: 640px) {
-      .main-container {
-        padding: 1rem;
-        padding-left: max(1rem, var(--safe-left));
-        padding-right: max(1rem, var(--safe-right));
-        gap: 1rem;
-      }
-      .app-header { padding: 0 1rem; }
-      .metric-value { font-size: 1.1rem; }
-      .timeline-items-wrap { padding: 10px; gap: 8px; }
-      .header-actions .btn-secondary { display: none; } /* hide export on small screens */
-    }
-
-    /* =====================================================
-       SCROLLBAR
-    ===================================================== */
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-    /* =====================================================
-       UTILITY
-    ===================================================== */
-    .font-mono { font-variant-numeric: tabular-nums; }
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    .font-mono { font-variant-numeric: tabular-nums; font-family: 'Outfit', 'Inter', monospace; }
   </style>
 </head>
 <body>
@@ -870,12 +960,16 @@
 ===================================================== -->
 <header class="app-header">
   <h1>
-    <span class="logo-icon" aria-hidden="true">📈</span>
-    Suivi d'Investissements
+    <span class="logo-icon" aria-hidden="true">📊</span>
+    Dépenses par Catégorie
+    <span id="loading-indicator" style="display: none; font-size: 0.75rem; font-weight: normal; color: var(--text-muted); margin-left: 10px; animation: pulse 1.5s infinite;">🔄 Synchro...</span>
   </h1>
   <div class="header-actions">
-    <button class="btn-secondary" id="btn-export" title="Exporter en JSON">⬇ Exporter</button>
-    <button class="btn-primary" id="btn-add">＋ Ajouter</button>
+    <button class="btn-secondary" id="btn-settings" title="Configuration Google Sheets" style="padding: 0 10px; min-width: 40px; justify-content: center;">⚙️</button>
+    <button class="btn-secondary" id="btn-export" title="Exporter en JSON">⬇ JSON</button>
+    <button class="btn-gemini" id="btn-add">
+      <span class="btn-gemini-inner">＋ Ajouter</span>
+    </button>
   </div>
 </header>
 
@@ -885,7 +979,7 @@
 <main class="main-container">
 
   <!-- MÉTRIQUES -->
-  <section aria-label="Métriques du portefeuille">
+  <section aria-label="Métriques des dépenses">
     <div class="metrics-grid" id="metrics-grid"></div>
   </section>
 
@@ -901,31 +995,37 @@
         </div>
       </div>
       <div class="section-body">
-        <div class="chart-wrap"><canvas id="chart-monthly" aria-label="Graphique de répartition mensuelle des investissements"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-monthly" aria-label="Répartition mensuelle des dépenses"></canvas></div>
       </div>
     </div>
 
     <div class="section-card">
       <div class="section-header">
-        <span class="section-title">Projection ROI — 10 ans</span>
-        <span style="font-size:0.70rem;color:var(--text-muted)">Valeur estimée du portefeuille</span>
+        <span class="section-title">Dépenses par Catégorie</span>
+        <span style="font-size:0.70rem;color:var(--text-muted)">Répartition globale</span>
       </div>
       <div class="section-body">
-        <div class="chart-wrap"><canvas id="chart-roi" aria-label="Graphique de projection ROI sur 10 ans"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-category" aria-label="Répartition par catégorie de dépense"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- TIMELINE -->
+  <!-- TABLEAU & TIMELINE -->
   <div class="section-card">
     <div class="section-header">
-      <span class="section-title">Timeline chronologique</span>
-      <span id="timeline-count" style="font-size:0.72rem;color:var(--text-muted)"></span>
+      <span class="section-title">Transactions</span>
+      <div style="display:flex; gap: 8px; align-items:center;">
+        <button class="btn-tab active" id="tab-table">📋 Tableau</button>
+        <button class="btn-tab" id="tab-timeline">⏳ Timeline</button>
+        <span id="timeline-count" style="font-size:0.72rem;color:var(--text-muted); margin-left: 10px;"></span>
+      </div>
     </div>
-    <div style="padding:0.9rem 1.25rem; border-bottom: var(--border-w) solid var(--border);">
+    
+    <!-- Filtres -->
+    <div style="padding:0.9rem 1.4rem; border-bottom: var(--border-w) solid var(--border); background: rgba(16, 3, 5, 0.15);">
       <div class="filter-bar">
         <input class="search-input" type="search" id="search-input"
-          placeholder="🔍  Rechercher…" aria-label="Recherche"
+          placeholder="🔍  Rechercher par description ou catégorie…" aria-label="Recherche"
           autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
         <select class="filter-select" id="filter-status" aria-label="Filtrer par statut">
           <option value="">Tous statuts</option>
@@ -938,43 +1038,100 @@
         </select>
       </div>
     </div>
-    <div class="timeline" id="timeline-list"></div>
+    
+    <!-- Tableau View Container -->
+    <div class="table-responsive" id="table-container">
+      <table class="transaction-table">
+        <thead>
+          <tr>
+            <th>Date & Heure</th>
+            <th>Description</th>
+            <th>Catégorie</th>
+            <th>Statut</th>
+            <th style="text-align: right;">Montant</th>
+            <th>Notes</th>
+            <th style="text-align: center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Injecté dynamiquement -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Timeline View Container -->
+    <div class="timeline" id="timeline-list" style="display:none"></div>
   </div>
 
 </main>
 
 <!-- =====================================================
-     MODAL — FORMULAIRE
+     SETTINGS MODAL
+===================================================== -->
+<div class="modal-overlay" id="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title-text">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="settings-title-text">Configuration Google Sheets</span>
+      <button class="modal-close" id="settings-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.4;">
+        Connectez l'application à un classeur Google Sheet en collant l'URL de votre application Web Google Apps Script ci-dessous.
+      </p>
+      <div class="form-field">
+        <label class="form-label" for="f-sheet-url">URL de l'application Web Apps Script</label>
+        <input class="form-input" id="f-sheet-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" />
+      </div>
+      <div style="font-size: 0.73rem; color: var(--text-muted); line-height: 1.4; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-top: 5px;">
+        <strong>Étapes de mise en place :</strong><br>
+        1. Allez dans Google Sheets de votre classeur > <em>Extensions > Apps Script</em>.<br>
+        2. Remplacez le code par le script de synchronisation fourni dans le guide.<br>
+        3. Cliquez sur <em>Déployer > Nouveau déploiement</em>.<br>
+        4. Choisissez <em>Application Web</em>, puis configurez l'accès pour <em>Tout le monde</em> (Anyone).<br>
+        5. Copiez et collez l'URL fournie par Google ci-dessus.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-cancel-settings">Annuler</button>
+      <button class="btn-gemini" id="btn-save-settings">
+        <span class="btn-gemini-inner">Enregistrer</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     MODAL — FORMULAIRE (AJOUT / MODIFICATION)
 ===================================================== -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
   <div class="modal" id="modal">
     <div class="modal-handle" aria-hidden="true"></div>
     <div class="modal-header">
-      <span class="modal-title" id="modal-title-text">Nouvel investissement</span>
+      <span class="modal-title" id="modal-title-text">Nouvelle transaction</span>
       <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-field">
         <label class="form-label" for="f-desc">Description *</label>
-        <input class="form-input" id="f-desc" type="text" placeholder="ex. ETF MSCI World"
+        <input class="form-input" id="f-desc" type="text" placeholder="ex. Courses hebdomadaires, Resto..."
           autocomplete="off" autocorrect="off" required />
       </div>
       <div class="form-grid-2">
         <div class="form-field">
           <label class="form-label" for="f-amount">Montant (MAD) *</label>
           <input class="form-input" id="f-amount" type="number"
-            min="0" step="0.01" placeholder="ex. 12000" inputmode="decimal" required />
+            min="0" step="0.01" placeholder="ex. 450" inputmode="decimal" required />
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-date">Date (Mois/Année) *</label>
-          <input class="form-input" id="f-date" type="month" required />
+          <label class="form-label" for="f-date">Date & Heure *</label>
+          <input class="form-input" id="f-date" type="datetime-local" required />
         </div>
       </div>
       <div class="form-grid-2">
         <div class="form-field">
           <label class="form-label" for="f-cat">Catégorie</label>
           <input class="form-input" id="f-cat" type="text"
-            placeholder="ex. ETF, Immobilier…" list="cat-list" autocomplete="off" />
+            placeholder="ex. Alimentation, Loyer, Loisirs..." list="cat-list" autocomplete="off" />
           <datalist id="cat-list"></datalist>
         </div>
         <div class="form-field">
@@ -986,35 +1143,32 @@
           </select>
         </div>
       </div>
-      <div class="form-grid-2">
-        <div class="form-field">
-          <label class="form-label" for="f-roi">ROI annuel attendu (%)</label>
-          <input class="form-input" id="f-roi" type="number"
-            step="0.1" min="0" value="5" inputmode="decimal" />
-        </div>
-        <div class="form-field">
-          <label class="form-label" for="f-duration">Durée de placement (ans)</label>
-          <input class="form-input" id="f-duration" type="number"
-            min="1" step="1" value="5" inputmode="numeric" />
-        </div>
+      
+      <!-- ROI & Durée (masqués mais conservés pour compatibilité structurelle) -->
+      <div style="display: none;">
+        <input type="number" id="f-roi" value="0" />
+        <input type="number" id="f-duration" value="1" />
       </div>
+
       <div class="form-field">
         <label class="form-label" for="f-notes">Notes / Commentaires</label>
-        <textarea class="form-textarea" id="f-notes" placeholder="Informations complémentaires…"></textarea>
+        <textarea class="form-textarea" id="f-notes" placeholder="Détails supplémentaires (lieu, mode de paiement...)"></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-danger btn-danger-left" id="btn-delete-modal" style="display:none">🗑 Supprimer</button>
       <button class="btn-secondary" id="btn-cancel-modal">Annuler</button>
-      <button class="btn-primary" id="btn-save-modal">Enregistrer</button>
+      <button class="btn-gemini" id="btn-save-modal">
+        <span class="btn-gemini-inner">Enregistrer</span>
+      </button>
     </div>
   </div>
 </div>
 
 <!-- =====================================================
-     DETAIL SLIDE-OVER
+     DETAIL PANEL (SLIDE-OVER)
 ===================================================== -->
-<div class="detail-overlay" id="detail-overlay" role="dialog" aria-modal="true" aria-label="Détail de l'investissement">
+<div class="detail-overlay" id="detail-overlay" role="dialog" aria-modal="true" aria-label="Détail de la transaction">
   <div class="detail-panel" id="detail-panel">
     <div class="detail-header">
       <div class="detail-dot" id="detail-dot"></div>
@@ -1026,17 +1180,15 @@
     </div>
     <div class="detail-body">
       <div class="detail-kpi-row" id="detail-kpi-row"></div>
-      <div>
-        <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Courbe de croissance</div>
-        <div class="sparkline-wrap"><canvas id="sparkline-chart"></canvas></div>
-      </div>
       <div id="detail-notes-wrap" style="display:none">
         <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Notes</div>
         <div class="detail-notes" id="detail-notes"></div>
       </div>
     </div>
     <div class="detail-actions">
-      <button class="btn-primary" id="btn-edit-detail" style="flex:1">✏️ Modifier</button>
+      <button class="btn-gemini" id="btn-edit-detail" style="flex:1">
+        <span class="btn-gemini-inner">✏️ Modifier</span>
+      </button>
       <button class="btn-danger" id="btn-delete-detail">🗑 Supprimer</button>
     </div>
   </div>
@@ -1047,27 +1199,25 @@
 ===================================================== -->
 <script>
 /* =====================================================
-   CONSTANTS & DATA
+   CONSTANTS & CONFIG
 ===================================================== */
 const STORAGE_KEY = 'investment_tracker_data';
+const SHEETS_URL_KEY = 'google_sheets_url';
 const CURRENCY = 'MAD';
 
 const STATUS_CONFIG = {
-  done:     { label: 'Réalisé',      icon: '✅', color: '#639922', light: '#8DC63F', glow: 'rgba(99,153,34,0.32)'    },
-  planned:  { label: 'Planifié',     icon: '🗓', color: '#EF9F27', light: '#F5B93A', glow: 'rgba(239,159,39,0.32)'   },
-  forecast: { label: 'Prévisionnel', icon: '💡', color: '#7F77DD', light: '#A19CF0', glow: 'rgba(127,119,221,0.32)'  }
+  done:     { label: 'Réalisé',      icon: '✅', color: '#E0115F', glow: 'rgba(224,17,95,0.32)' },
+  planned:  { label: 'Planifié',     icon: '🗓', color: '#D35400', glow: 'rgba(211,84,0,0.32)' },
+  forecast: { label: 'Prévisionnel', icon: '💡', color: '#8E44AD', glow: 'rgba(142,68,173,0.32)' }
 };
-
-function makeSamples() {
-  return [];
-}
 
 let data = [];
 let editingId = null;
 let detailId  = null;
-let sparklineChart = null;
-let monthlyChart   = null;
-let roiChart       = null;
+let monthlyChart = null;
+let roiChart     = null; // Réutilisé pour le graphique par catégorie
+let currentView  = 'table';
+let sheetsUrl    = localStorage.getItem(SHEETS_URL_KEY) || '';
 
 /* =====================================================
    UTILITIES
@@ -1076,126 +1226,170 @@ function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-function fmt(n, compact = false) {
-  if (compact && Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + ' M ' + CURRENCY;
-  if (compact && Math.abs(n) >= 1_000)     return (n / 1_000).toFixed(1)     + ' K ' + CURRENCY;
-  return n.toLocaleString('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '\u00a0' + CURRENCY;
+function fmt(n) {
+  return n.toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0' + CURRENCY;
 }
 
 function fmtDate(dateStr) {
-  const [y, m] = dateStr.split('-');
-  return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + ' à ' +
+         d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function fmtDateShort(dateStr) {
+function fmtMonthShort(dateStr) {
+  if (!dateStr) return '';
   const [y, m] = dateStr.split('-');
   return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
 }
 
-function futureValue(inv) {
-  return inv.amount * Math.pow(1 + inv.roi / 100, inv.duration);
-}
-function netGain(inv) { return futureValue(inv) - inv.amount; }
-
 function escHtml(str) {
-  return String(str)
+  return String(str || '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* =====================================================
-   STORAGE
+   LOADING & SYNCHRONISATION GOOGLE SHEETS
 ===================================================== */
-function load() {
+function showLoading(show) {
+  document.getElementById('loading-indicator').style.display = show ? 'inline-block' : 'none';
+}
+
+async function load() {
+  if (sheetsUrl) {
+    showLoading(true);
+    try {
+      const response = await fetch(sheetsUrl, {
+        method: 'GET',
+        redirect: 'follow'
+      });
+      if (!response.ok) throw new Error('Erreur de réponse réseau.');
+      const rows = await response.json();
+      
+      data = rows.map(r => ({
+        id: r.id || uid(),
+        date: r.date || new Date().toISOString().slice(0, 16),
+        desc: r.desc || '',
+        cat: r.cat || '',
+        status: r.status || 'done',
+        amount: parseFloat(r.amount) || 0,
+        roi: parseFloat(r.roi) || 0,
+        duration: parseInt(r.duration) || 1,
+        notes: r.notes || ''
+      }));
+      saveLocally();
+    } catch (err) {
+      console.error('Sheets load error, falling back to local:', err);
+      loadLocally();
+    } finally {
+      showLoading(false);
+    }
+  } else {
+    loadLocally();
+  }
+}
+
+function loadLocally() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       data = JSON.parse(raw);
       data.forEach(d => { if (!d.id) d.id = uid(); });
     } else {
-      data = makeSamples();
-      save();
+      data = [];
     }
-  } catch { data = makeSamples(); save(); }
+  } catch {
+    data = [];
+  }
 }
 
-function save() {
+function saveLocally() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+async function syncToSheets(action, item) {
+  if (!sheetsUrl) return true;
+  showLoading(true);
+  try {
+    const response = await fetch(sheetsUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action, data: item }),
+      headers: {
+        'Content-Type': 'text/plain' // Évite le preflight OPTIONS CORS complexe
+      }
+    });
+    if (!response.ok) throw new Error('Échec de la synchro');
+    return true;
+  } catch (err) {
+    console.error('Sheets sync error:', err);
+    return false;
+  } finally {
+    showLoading(false);
+  }
 }
 
 /* =====================================================
    METRICS
 ===================================================== */
 function renderMetrics() {
+  const totalExpenses = data.reduce((a,d) => a + d.amount, 0);
   const totalDone     = data.filter(d => d.status === 'done').reduce((a,d) => a + d.amount, 0);
   const totalPlanned  = data.filter(d => d.status === 'planned').reduce((a,d) => a + d.amount, 0);
   const totalForecast = data.filter(d => d.status === 'forecast').reduce((a,d) => a + d.amount, 0);
-  const totalFuture   = data.reduce((a,d) => a + futureValue(d), 0);
-  const totalGain     = data.reduce((a,d) => a + netGain(d), 0);
 
   document.getElementById('metrics-grid').innerHTML = `
+    <div class="metric-card total" style="grid-column: span 2; border-color: rgba(224, 17, 95, 0.45); background: rgba(114, 47, 55, 0.15);">
+      <div class="metric-label" style="color: var(--done-color); font-weight: 700;">Dépenses (Total F)</div>
+      <div class="metric-value font-mono" style="font-size: 1.85rem; color: #fff;">${fmt(totalExpenses)}</div>
+      <div class="metric-sub">Somme cumulée de toutes les transactions</div>
+    </div>
     <div class="metric-card done">
-      <div class="metric-label">✅ Total Réalisé</div>
-      <div class="metric-value font-mono">${fmt(totalDone, true)}</div>
-      <div class="metric-sub">${data.filter(d=>d.status==='done').length} investissement(s)</div>
+      <div class="metric-label">✅ Réalisées</div>
+      <div class="metric-value font-mono">${fmt(totalDone)}</div>
+      <div class="metric-sub">${data.filter(d=>d.status==='done').length} transaction(s)</div>
     </div>
     <div class="metric-card planned">
-      <div class="metric-label">🗓 Total Planifié</div>
-      <div class="metric-value font-mono">${fmt(totalPlanned, true)}</div>
-      <div class="metric-sub">${data.filter(d=>d.status==='planned').length} investissement(s)</div>
+      <div class="metric-label">🗓 Planifiées</div>
+      <div class="metric-value font-mono">${fmt(totalPlanned)}</div>
+      <div class="metric-sub">${data.filter(d=>d.status==='planned').length} transaction(s)</div>
     </div>
     <div class="metric-card forecast">
-      <div class="metric-label">💡 Total Prévisionnel</div>
-      <div class="metric-value font-mono">${fmt(totalForecast, true)}</div>
-      <div class="metric-sub">${data.filter(d=>d.status==='forecast').length} investissement(s)</div>
-    </div>
-    <div class="metric-card future">
-      <div class="metric-label">📈 Valeur Future Estimée</div>
-      <div class="metric-value font-mono">${fmt(totalFuture, true)}</div>
-      <div class="metric-sub">Intérêts composés cumulés</div>
-    </div>
-    <div class="metric-card gain">
-      <div class="metric-label">💰 Gain Net Estimé</div>
-      <div class="metric-value font-mono" style="color:#10B981">+${fmt(totalGain, true)}</div>
-      <div class="metric-sub">Valeur future − Capital initial</div>
-    </div>
-    <div class="metric-card total">
-      <div class="metric-label">📋 Entrées totales</div>
-      <div class="metric-value font-mono">${data.length}</div>
-      <div class="metric-sub">Tous statuts confondus</div>
+      <div class="metric-label">💡 Prévisionnelles</div>
+      <div class="metric-value font-mono">${fmt(totalForecast)}</div>
+      <div class="metric-sub">${data.filter(d=>d.status==='forecast').length} transaction(s)</div>
     </div>
   `;
 }
 
 /* =====================================================
-   MONTHLY BAR CHART — Glowing bars
+   MONTHLY BAR CHART
 ===================================================== */
 function renderMonthlyChart() {
-  const monthSet = new Set(data.map(d => d.date));
+  const monthSet = new Set(data.map(d => d.date.slice(0, 7))); // Extrait YYYY-MM
   const months   = [...monthSet].sort();
-  const labels   = months.map(fmtDateShort);
+  const labels   = months.map(fmtMonthShort);
 
-  const doneData     = months.map(m => data.filter(d => d.date===m && d.status==='done').reduce((a,d) => a+d.amount, 0));
-  const plannedData  = months.map(m => data.filter(d => d.date===m && d.status==='planned').reduce((a,d) => a+d.amount, 0));
-  const forecastData = months.map(m => data.filter(d => d.date===m && d.status==='forecast').reduce((a,d) => a+d.amount, 0));
+  const doneData     = months.map(m => data.filter(d => d.date.startsWith(m) && d.status==='done').reduce((a,d) => a+d.amount, 0));
+  const plannedData  = months.map(m => data.filter(d => d.date.startsWith(m) && d.status==='planned').reduce((a,d) => a+d.amount, 0));
+  const forecastData = months.map(m => data.filter(d => d.date.startsWith(m) && d.status==='forecast').reduce((a,d) => a+d.amount, 0));
 
-  const isDark    = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-  const tickColor = isDark ? '#9CA3AF' : '#6B7280';
+  const gridColor = 'rgba(255,255,255,0.04)';
+  const tickColor = '#B39D9E';
 
-  // Custom glow plugin
   const glowPlugin = {
     id: 'barGlow',
     afterDatasetDraw(chart, args) {
       const { ctx } = chart;
-      const glowMap = { 0: 'rgba(99,153,34,0.35)', 1: 'rgba(239,159,39,0.35)', 2: 'rgba(127,119,221,0.35)' };
+      const glowMap = { 0: 'rgba(224, 17, 95, 0.4)', 1: 'rgba(211, 84, 0, 0.4)', 2: 'rgba(142, 68, 173, 0.4)' };
       const glow = glowMap[args.index];
       if (!glow) return;
       ctx.save();
       ctx.shadowColor = glow;
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = 10;
       args.meta.data.forEach(bar => {
-        if (bar.base === bar.y) return; // zero bar
+        if (bar.base === bar.y) return;
         ctx.fillStyle = chart.data.datasets[args.index].backgroundColor;
         ctx.beginPath();
         ctx.roundRect(bar.x - bar.width/2, bar.y, bar.width, bar.base - bar.y, 4);
@@ -1210,33 +1404,9 @@ function renderMonthlyChart() {
     data: {
       labels,
       datasets: [
-        {
-          label: 'Réalisé',
-          data: doneData,
-          backgroundColor: '#639922',
-          hoverBackgroundColor: '#8DC63F',
-          borderRadius: 5,
-          borderSkipped: false,
-          borderWidth: 0,
-        },
-        {
-          label: 'Planifié',
-          data: plannedData,
-          backgroundColor: '#EF9F27',
-          hoverBackgroundColor: '#F5B93A',
-          borderRadius: 5,
-          borderSkipped: false,
-          borderWidth: 0,
-        },
-        {
-          label: 'Prévisionnel',
-          data: forecastData,
-          backgroundColor: '#7F77DD',
-          hoverBackgroundColor: '#A19CF0',
-          borderRadius: 5,
-          borderSkipped: false,
-          borderWidth: 0,
-        }
+        { label: 'Réalisé', data: doneData, backgroundColor: '#E0115F', borderRadius: 4, borderWidth: 0 },
+        { label: 'Planifié', data: plannedData, backgroundColor: '#D35400', borderRadius: 4, borderWidth: 0 },
+        { label: 'Prévisionnel', data: forecastData, backgroundColor: '#8E44AD', borderRadius: 4, borderWidth: 0 }
       ]
     },
     options: {
@@ -1246,30 +1416,19 @@ function renderMonthlyChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: isDark ? '#1A1D27' : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+          backgroundColor: '#1E070A',
+          borderColor: 'rgba(255,255,255,0.08)',
           borderWidth: 1,
-          titleColor: isDark ? '#E8EAF0' : '#111827',
-          bodyColor: isDark ? '#9CA3AF' : '#6B7280',
+          titleColor: '#F5EBEB',
+          bodyColor: '#B39D9E',
           padding: 10,
           cornerRadius: 8,
-          callbacks: {
-            label: ctx => `  ${ctx.dataset.label} : ${fmt(ctx.raw)}`
-          }
+          callbacks: { label: ctx => `  ${ctx.dataset.label} : ${fmt(ctx.raw)}` }
         }
       },
       scales: {
-        x: {
-          grid: { color: gridColor },
-          ticks: { color: tickColor, font: { size: 10, weight: '600' } },
-          border: { color: gridColor }
-        },
-        y: {
-          grid: { color: gridColor },
-          ticks: { color: tickColor, font: { size: 10 }, callback: v => fmt(v, true) },
-          beginAtZero: true,
-          border: { color: gridColor }
-        }
+        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10, weight: '600' } } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } }, beginAtZero: true }
       }
     },
     plugins: [glowPlugin]
@@ -1280,160 +1439,61 @@ function renderMonthlyChart() {
 }
 
 /* =====================================================
-   ROI PROJECTION CHART
+   CATEGORY DOUGHNUT CHART
 ===================================================== */
-function renderRoiChart() {
-  const isDark    = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-  const tickColor = isDark ? '#9CA3AF' : '#6B7280';
-
-  const YEARS    = Array.from({ length: 11 }, (_, i) => i);
-  const datasets = [];
-
-  data.forEach(inv => {
-    const sc  = STATUS_CONFIG[inv.status];
-    const pts = YEARS.map(t => t > inv.duration ? null : inv.amount * Math.pow(1 + inv.roi / 100, t));
-    datasets.push({
-      label: inv.desc,
-      data: pts,
-      borderColor: sc.color + '50',
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
-      pointRadius: 0,
-      spanGaps: false,
-      tension: 0.4
-    });
+function renderCategoryChart() {
+  const categories = {};
+  data.forEach(d => {
+    const cat = d.cat || 'Non catégorisé';
+    categories[cat] = (categories[cat] || 0) + d.amount;
   });
 
-  const totalPts = YEARS.map(t => data.reduce((s, inv) => {
-    if (t > inv.duration) return s + futureValue(inv);
-    return s + inv.amount * Math.pow(1 + inv.roi / 100, t);
-  }, 0));
-
-  datasets.push({
-    label: 'Portefeuille total',
-    data: totalPts,
-    borderColor: isDark ? '#60A5FA' : '#2563EB',
-    backgroundColor: isDark ? 'rgba(96,165,250,0.07)' : 'rgba(37,99,235,0.06)',
-    borderWidth: 3,
-    pointRadius: 3,
-    pointBackgroundColor: isDark ? '#60A5FA' : '#2563EB',
-    tension: 0.4,
-    fill: true
-  });
+  const labels = Object.keys(categories);
+  const values = Object.values(categories);
 
   const cfg = {
-    type: 'line',
-    data: { labels: YEARS.map(y => `Année ${y}`), datasets },
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: [
+          '#E0115F', '#8E44AD', '#D35400', '#722F37', 
+          '#C0392B', '#16A085', '#2980B9', '#F1C40F'
+        ],
+        borderColor: '#0A0102',
+        borderWidth: 2
+      }]
+    },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          position: 'right',
+          labels: {
+            color: '#F5EBEB',
+            font: { size: 11, family: 'Outfit' }
+          }
+        },
         tooltip: {
-          backgroundColor: isDark ? '#1A1D27' : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+          backgroundColor: '#1E070A',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
           borderWidth: 1,
-          titleColor: isDark ? '#E8EAF0' : '#111827',
-          bodyColor: isDark ? '#9CA3AF' : '#6B7280',
-          padding: 10, cornerRadius: 8,
-          filter: item => item.dataset.label === 'Portefeuille total',
-          callbacks: { label: ctx => `  Portefeuille : ${fmt(ctx.raw)}` }
+          titleColor: '#F5EBEB',
+          bodyColor: '#B39D9E',
+          callbacks: { label: ctx => ` ${ctx.label} : ${fmt(ctx.raw)}` }
         }
-      },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } }, border: { color: gridColor } },
-        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 }, callback: v => fmt(v, true) }, beginAtZero: true, border: { color: gridColor } }
       }
     }
   };
 
   if (roiChart) roiChart.destroy();
-  roiChart = new Chart(document.getElementById('chart-roi'), cfg);
+  roiChart = new Chart(document.getElementById('chart-category'), cfg);
 }
 
 /* =====================================================
-   SPARKLINE (detail panel)
-===================================================== */
-function renderSparkline(inv) {
-  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const sc     = STATUS_CONFIG[inv.status];
-  const years  = Array.from({ length: inv.duration + 1 }, (_, i) => i);
-  const values = years.map(t => inv.amount * Math.pow(1 + inv.roi / 100, t));
-
-  const glowPlugin = {
-    id: 'lineGlow',
-    afterDatasetsDraw(chart) {
-      const { ctx } = chart;
-      ctx.save();
-      ctx.shadowColor = sc.glow;
-      ctx.shadowBlur  = 12;
-      chart.data.datasets.forEach((ds, i) => {
-        const meta = chart.getDatasetMeta(i);
-        if (meta.hidden) return;
-        ctx.strokeStyle = ds.borderColor;
-        ctx.lineWidth   = ds.borderWidth || 2;
-        ctx.beginPath();
-        meta.data.forEach((pt, j) => {
-          if (j === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
-        });
-        ctx.stroke();
-      });
-      ctx.restore();
-    }
-  };
-
-  const cfg = {
-    type: 'line',
-    data: {
-      labels: years.map(y => y === 0 ? 'Départ' : `Année ${y}`),
-      datasets: [{
-        label: 'Valeur estimée',
-        data: values,
-        borderColor: sc.color,
-        backgroundColor: sc.glow.replace('0.32', '0.10'),
-        borderWidth: 2,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-        pointBackgroundColor: sc.color,
-        tension: 0.4,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: isDark ? '#1A1D27' : '#FFF',
-          borderColor: sc.color,
-          borderWidth: 1,
-          titleColor: isDark ? '#E8EAF0' : '#111827',
-          bodyColor: sc.color,
-          padding: 8, cornerRadius: 7,
-          callbacks: { label: ctx => `  ${fmt(ctx.raw)}` }
-        }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: tickColor(), maxTicksLimit: 6 } },
-        y: {
-          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' },
-          ticks: { font: { size: 9 }, color: tickColor(), callback: v => fmt(v, true) }
-        }
-      }
-    },
-    plugins: [glowPlugin]
-  };
-
-  if (sparklineChart) sparklineChart.destroy();
-  sparklineChart = new Chart(document.getElementById('sparkline-chart'), cfg);
-}
-
-function tickColor() {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? '#9CA3AF' : '#6B7280';
-}
-
-/* =====================================================
-   TIMELINE
+   TIMELINE & TABLE DATA LOGIC
 ===================================================== */
 function getFilteredData() {
   const q   = document.getElementById('search-input').value.toLowerCase();
@@ -1447,7 +1507,7 @@ function getFilteredData() {
       if (q   && !d.desc.toLowerCase().includes(q) && !d.cat.toLowerCase().includes(q)) return false;
       return true;
     })
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort((a, b) => b.date.localeCompare(a.date)); // Tri décroissant précis (jour et heure)
 }
 
 function renderCatFilter() {
@@ -1460,31 +1520,75 @@ function renderCatFilter() {
 }
 
 function renderTimeline() {
-  const filtered  = getFilteredData();
-  const container = document.getElementById('timeline-list');
-  document.getElementById('timeline-count').textContent = `${filtered.length} / ${data.length} entrée(s)`;
+  const filtered = getFilteredData();
+  document.getElementById('timeline-count').textContent = `${filtered.length} / ${data.length} transaction(s)`;
 
+  if (currentView === 'table') {
+    document.getElementById('table-container').style.display = 'block';
+    document.getElementById('timeline-list').style.display = 'none';
+    renderTableView(filtered);
+  } else {
+    document.getElementById('table-container').style.display = 'none';
+    document.getElementById('timeline-list').style.display = 'block';
+    renderTimelineView(filtered);
+  }
+}
+
+function renderTableView(filtered) {
+  const tbody = document.getElementById('table-body');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Aucune transaction trouvée.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(inv => {
+    const sc = STATUS_CONFIG[inv.status];
+    return `
+      <tr data-id="${inv.id}">
+        <td style="white-space: nowrap;">${fmtDate(inv.date)}</td>
+        <td style="font-weight: 500;">${escHtml(inv.desc)}</td>
+        <td>${inv.cat ? `<span class="cat-badge">${escHtml(inv.cat)}</span>` : '<span style="color:var(--text-muted); font-style:italic;">Aucune</span>'}</td>
+        <td><span class="badge ${inv.status}">${sc.icon} ${sc.label}</span></td>
+        <td class="amount-cell" style="text-align: right; color: var(--text-primary);">${fmt(inv.amount)}</td>
+        <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary);">${escHtml(inv.notes || '')}</td>
+        <td style="text-align: center;">
+          <button class="btn-delete-item" data-id="${inv.id}" title="Supprimer">🗑</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', e => {
+      const delBtn = e.target.closest('.btn-delete-item');
+      if (delBtn) { e.stopPropagation(); deleteItem(delBtn.dataset.id); return; }
+      openDetail(row.dataset.id);
+    });
+  });
+}
+
+function renderTimelineView(filtered) {
+  const container = document.getElementById('timeline-list');
   if (!filtered.length) {
     container.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
-        <p>Aucun investissement ne correspond aux filtres.</p>
+        <p>Aucune transaction correspondante.</p>
       </div>`;
     return;
   }
 
-  // Group by month
   const groups = {};
   filtered.forEach(inv => {
-    if (!groups[inv.date]) groups[inv.date] = [];
-    groups[inv.date].push(inv);
+    const dayKey = inv.date.slice(0, 10); // YYYY-MM-DD
+    if (!groups[dayKey]) groups[dayKey] = [];
+    groups[dayKey].push(inv);
   });
-  const sortedMonths = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+  const sortedDays = Object.keys(groups).sort((a,b) => b.localeCompare(a));
 
-  container.innerHTML = sortedMonths.map(month => {
-    const items = groups[month].map(inv => {
+  container.innerHTML = sortedDays.map(day => {
+    const items = groups[day].map(inv => {
       const sc = STATUS_CONFIG[inv.status];
-      const fv = futureValue(inv);
+      const timeStr = new Date(inv.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       return `
         <div class="timeline-item ${inv.status}" data-id="${inv.id}"
           role="button" tabindex="0" aria-label="Voir ${escHtml(inv.desc)}">
@@ -1494,21 +1598,20 @@ function renderTimeline() {
             <div class="timeline-meta">
               <span class="badge ${inv.status}">${sc.icon} ${sc.label}</span>
               ${inv.cat ? `<span class="cat-badge">${escHtml(inv.cat)}</span>` : ''}
-              <span>${fmtDate(inv.date)}</span>
+              <span>${timeStr}</span>
             </div>
           </div>
           <div class="timeline-right">
             <div class="timeline-amount">${fmt(inv.amount)}</div>
-            <div class="timeline-future">→ ${fmt(fv, true)}</div>
           </div>
-          <button class="btn-delete-item" data-id="${inv.id}"
-            aria-label="Supprimer ${escHtml(inv.desc)}" title="Supprimer">🗑</button>
+          <button class="btn-delete-item" data-id="${inv.id}" aria-label="Supprimer" title="Supprimer">🗑</button>
         </div>`;
     }).join('');
 
+    const formattedDay = new Date(day).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     return `
       <div class="timeline-month-group">
-        <div class="timeline-month-label">${fmtDate(month)}</div>
+        <div class="timeline-month-label" style="text-transform: capitalize;">${formattedDay}</div>
         <div class="timeline-items-wrap">${items}</div>
       </div>`;
   }).join('');
@@ -1518,9 +1621,6 @@ function renderTimeline() {
       const delBtn = e.target.closest('.btn-delete-item');
       if (delBtn) { e.stopPropagation(); deleteItem(delBtn.dataset.id); return; }
       openDetail(el.dataset.id);
-    });
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(el.dataset.id); }
     });
   });
 }
@@ -1534,8 +1634,6 @@ function openDetail(id) {
   detailId = id;
 
   const sc = STATUS_CONFIG[inv.status];
-  const fv = futureValue(inv);
-  const gn = netGain(inv);
 
   document.getElementById('detail-dot').style.cssText =
     `background:${sc.color};box-shadow:0 0 8px ${sc.glow}`;
@@ -1545,29 +1643,17 @@ function openDetail(id) {
     ${inv.cat ? `<span class="cat-badge">${escHtml(inv.cat)}</span>` : ''}`;
 
   document.getElementById('detail-kpi-row').innerHTML = `
-    <div class="detail-kpi">
-      <div class="detail-kpi-label">Montant initial</div>
-      <div class="detail-kpi-value font-mono">${fmt(inv.amount)}</div>
+    <div class="detail-kpi" style="grid-column: span 2;">
+      <div class="detail-kpi-label">Montant (F)</div>
+      <div class="detail-kpi-value font-mono" style="font-size: 1.2rem; color: var(--done-color);">${fmt(inv.amount)}</div>
     </div>
     <div class="detail-kpi">
-      <div class="detail-kpi-label">Taux ROI annuel</div>
-      <div class="detail-kpi-value font-mono">${inv.roi}%</div>
+      <div class="detail-kpi-label">Date & Heure</div>
+      <div class="detail-kpi-value" style="font-size: 0.8rem;">${fmtDate(inv.date)}</div>
     </div>
     <div class="detail-kpi">
-      <div class="detail-kpi-label">Durée</div>
-      <div class="detail-kpi-value font-mono">${inv.duration} ans</div>
-    </div>
-    <div class="detail-kpi">
-      <div class="detail-kpi-label">Date</div>
-      <div class="detail-kpi-value">${fmtDate(inv.date)}</div>
-    </div>
-    <div class="detail-kpi">
-      <div class="detail-kpi-label">Valeur estimée à terme</div>
-      <div class="detail-kpi-value font-mono">${fmt(fv)}</div>
-    </div>
-    <div class="detail-kpi">
-      <div class="detail-kpi-label">Gain net estimé</div>
-      <div class="detail-kpi-value gain font-mono">+${fmt(gn)}</div>
+      <div class="detail-kpi-label">ID Transaction</div>
+      <div class="detail-kpi-value font-mono" style="font-size: 0.75rem; color: var(--text-muted);">${inv.id}</div>
     </div>`;
 
   const nw = document.getElementById('detail-notes-wrap');
@@ -1579,7 +1665,6 @@ function openDetail(id) {
   }
 
   document.getElementById('detail-overlay').classList.add('open');
-  requestAnimationFrame(() => renderSparkline(inv));
 }
 
 function closeDetail() {
@@ -1588,24 +1673,32 @@ function closeDetail() {
 }
 
 /* =====================================================
-   MODAL
+   FORMULAIRE MODAL
 ===================================================== */
 function openModal(id = null) {
   editingId = id;
   const inv = id ? data.find(d => d.id === id) : null;
 
-  document.getElementById('modal-title-text').textContent = id ? "Modifier l'investissement" : 'Nouvel investissement';
-  document.getElementById('btn-save-modal').textContent   = id ? 'Mettre à jour' : 'Enregistrer';
+  document.getElementById('modal-title-text').textContent = id ? "Modifier la transaction" : 'Nouvelle transaction';
+  document.getElementById('btn-save-modal').querySelector('.btn-gemini-inner').textContent = id ? 'Mettre à jour' : 'Enregistrer';
   document.getElementById('btn-delete-modal').style.display = id ? 'inline-flex' : 'none';
 
-  document.getElementById('f-desc').value     = inv ? inv.desc     : '';
-  document.getElementById('f-amount').value   = inv ? inv.amount   : '';
-  document.getElementById('f-date').value     = inv ? inv.date     : '';
-  document.getElementById('f-cat').value      = inv ? inv.cat      : '';
-  document.getElementById('f-status').value   = inv ? inv.status   : 'done';
-  document.getElementById('f-roi').value      = inv ? inv.roi      : 5;
-  document.getElementById('f-duration').value = inv ? inv.duration : 5;
-  document.getElementById('f-notes').value    = inv ? (inv.notes||'') : '';
+  document.getElementById('f-desc').value   = inv ? inv.desc   : '';
+  document.getElementById('f-amount').value = inv ? inv.amount : '';
+  
+  // Remplissage date : format ISO local YYYY-MM-DDTHH:mm
+  if (inv && inv.date) {
+    document.getElementById('f-date').value = inv.date.slice(0, 16);
+  } else {
+    // Par défaut : date et heure actuelles
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('f-date').value = now.toISOString().slice(0, 16);
+  }
+  
+  document.getElementById('f-cat').value    = inv ? inv.cat    : '';
+  document.getElementById('f-status').value = inv ? inv.status : 'done';
+  document.getElementById('f-notes').value  = inv ? (inv.notes||'') : '';
 
   document.getElementById('modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('f-desc').focus(), 300);
@@ -1616,14 +1709,12 @@ function closeModal() {
   editingId = null;
 }
 
-function saveModal() {
+async function saveModal() {
   const desc     = document.getElementById('f-desc').value.trim();
   const amountRaw= document.getElementById('f-amount').value;
   const date     = document.getElementById('f-date').value;
   const cat      = document.getElementById('f-cat').value.trim();
   const status   = document.getElementById('f-status').value;
-  const roi      = parseFloat(document.getElementById('f-roi').value) || 0;
-  const duration = parseInt(document.getElementById('f-duration').value) || 1;
   const notes    = document.getElementById('f-notes').value.trim();
 
   if (!desc) { document.getElementById('f-desc').focus(); return; }
@@ -1631,36 +1722,60 @@ function saveModal() {
   if (!date) { document.getElementById('f-date').focus(); return; }
 
   const amount = parseFloat(amountRaw);
+  let item = null;
+  let action = '';
 
   if (editingId) {
     const idx = data.findIndex(d => d.id === editingId);
-    if (idx >= 0) data[idx] = { ...data[idx], desc, amount, date, cat, status, roi, duration, notes };
+    if (idx >= 0) {
+      data[idx] = { ...data[idx], desc, amount, date, cat, status, notes };
+      item = data[idx];
+      action = 'update';
+    }
   } else {
-    data.push({ id: uid(), desc, amount, date, cat, status, roi, duration, notes });
+    item = { id: uid(), desc, amount, date, cat, status, roi: 0, duration: 1, notes };
+    data.push(item);
+    action = 'create';
   }
 
-  save();
+  saveLocally();
   closeModal();
   refresh();
+
+  if (sheetsUrl && item) {
+    await syncToSheets(action, item);
+  }
 }
 
-function deleteItem(id) {
-  if (!confirm('Supprimer cet investissement ?')) return;
+async function deleteItem(id) {
+  if (!confirm('Supprimer cette transaction ?')) return;
+  const item = data.find(d => d.id === id);
   data = data.filter(d => d.id !== id);
-  save();
+  saveLocally();
   closeDetail();
   refresh();
+
+  if (sheetsUrl && item) {
+    await syncToSheets('delete', item);
+  }
 }
 
 /* =====================================================
-   EXPORT
+   SETTINGS CONFIGURATION
+===================================================== */
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+/* =====================================================
+   EXPORT JSON
 ===================================================== */
 function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `investissements_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `transactions_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1673,11 +1788,11 @@ function refresh() {
   renderCatFilter();
   renderTimeline();
   renderMonthlyChart();
-  renderRoiChart();
+  renderCategoryChart();
 }
 
 /* =====================================================
-   EVENTS
+   EVENTS WIRING
 ===================================================== */
 document.getElementById('btn-add').addEventListener('click', () => openModal());
 document.getElementById('btn-export').addEventListener('click', exportData);
@@ -1705,24 +1820,55 @@ document.getElementById('search-input').addEventListener('input', renderTimeline
 document.getElementById('filter-status').addEventListener('change', renderTimeline);
 document.getElementById('filter-cat').addEventListener('change', renderTimeline);
 
+// View tabs toggles
+document.getElementById('tab-table').addEventListener('click', () => {
+  currentView = 'table';
+  document.getElementById('tab-table').classList.add('active');
+  document.getElementById('tab-timeline').classList.remove('active');
+  renderTimeline();
+});
+document.getElementById('tab-timeline').addEventListener('click', () => {
+  currentView = 'timeline';
+  document.getElementById('tab-timeline').classList.add('active');
+  document.getElementById('tab-table').classList.remove('active');
+  renderTimeline();
+});
+
+// Settings Events
+document.getElementById('btn-settings').addEventListener('click', () => {
+  document.getElementById('f-sheet-url').value = sheetsUrl;
+  document.getElementById('settings-overlay').classList.add('open');
+});
+document.getElementById('settings-close').addEventListener('click', closeSettings);
+document.getElementById('btn-cancel-settings').addEventListener('click', closeSettings);
+document.getElementById('btn-save-settings').addEventListener('click', () => {
+  const url = document.getElementById('f-sheet-url').value.trim();
+  sheetsUrl = url;
+  if (url) {
+    localStorage.setItem(SHEETS_URL_KEY, url);
+  } else {
+    localStorage.removeItem(SHEETS_URL_KEY);
+  }
+  closeSettings();
+  load().then(() => refresh());
+});
+document.getElementById('settings-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+});
+
+// Escape key to close overlays
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    if (document.getElementById('modal-overlay').classList.contains('open')) closeModal();
-    else if (document.getElementById('detail-overlay').classList.contains('open')) closeDetail();
+    closeModal();
+    closeDetail();
+    closeSettings();
   }
 });
 
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-  renderMonthlyChart();
-  renderRoiChart();
-  if (detailId) renderSparkline(data.find(d => d.id === detailId));
-});
-
 /* =====================================================
-   INIT
+   INITIALIZATION
 ===================================================== */
-load();
-refresh();
+load().then(() => refresh());
 </script>
 </body>
 </html>
